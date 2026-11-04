@@ -14,26 +14,117 @@
     }
     main { max-width: 480px; margin: 0 auto; padding: 16px; }
     h1 { font-size: 1.4rem; margin: 0 0 16px; }
+    h2 { font-size: 1rem; margin: 20px 0 8px; }
     .panel { background: #22242b; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .stats { display: flex; gap: 12px; }
+    .stats .panel { flex: 1; margin-bottom: 0; }
     .label { font-size: 0.8rem; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.05em; }
-    .big { font-size: 2rem; font-weight: 700; margin-top: 4px; }
+    .big { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
+    .muted { color: #9aa0ad; font-size: 0.85rem; }
     #welcome-back {
       background: #2d4a2f; border: 1px solid #4f8a54;
       border-radius: 12px; padding: 16px; margin-bottom: 12px;
     }
     #welcome-back[hidden] { display: none; }
+    #unlock-banner {
+      background: #3d3320; border: 1px solid #c9a23c;
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    }
+    #unlock-banner[hidden] { display: none; }
+    #unlock-banner p { margin: 6px 0; }
+    .upgrade .muted { margin-top: 2px; }
+    .upgrade-buy { width: 100%; background: #2f6fed; margin-top: 10px; }
+    .upgrade-buy:disabled { background: #3a3d48; }
+    .unlock { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
+    .unlock.done strong { color: #7fd48a; }
+    #notice { min-height: 1.4em; margin: 12px 0 0; font-size: 0.9rem; }
+    #notice.good { color: #7fd48a; }
+    #notice.bad { color: #ff8a80; }
     button {
       font: inherit; color: inherit; background: #3a3d48;
       border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer;
     }
     button:active { background: #4a4e5c; }
-    .footer { text-align: center; margin-top: 24px; }
-    .footer button { font-size: 0.8rem; color: #9aa0ad; background: none; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .order-action { width: 100%; background: #2f6fed; margin-top: 10px; }
+    .order-action:disabled { background: #3a3d48; }
+    .order-head { display: flex; justify-content: space-between; align-items: baseline; }
+    .order-deadline.urgent { color: #ff8a80; font-weight: 700; }
+    table.costs { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; }
+    table.costs td { padding: 2px 0; }
+    table.costs td + td { text-align: right; color: #c9ccd4; }
+    table.costs tr.total td { border-top: 1px solid #3a3d48; font-weight: 700; color: #f2f2f2; padding-top: 4px; }
+    .steps { display: flex; gap: 6px; }
+    .step { flex: 1; text-align: center; font-size: 0.75rem; padding: 4px 0; border-radius: 6px; background: #2c2f38; color: #9aa0ad; }
+    .step.done { background: #2d4a2f; color: #bfe8c4; }
+    .step.current { background: #2f4a7a; color: #fff; }
+    #debug[hidden] { display: none; }
+    #debug table td { font-size: 0.7rem; }
+    .order-notes p { margin: 4px 0 0; font-size: 0.8rem; color: #9aa0ad; }
+    .order-notes p.warn { color: #ffcc66; }
+    .order-notes p.good { color: #7fd48a; }
+    .bar { height: 6px; background: #2c2f38; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; width: 0; background: #2f6fed; }
+    /* Lesson card: floats at the bottom, never blocks the game */
+    #lesson-card {
+      position: fixed; left: 12px; right: 12px; bottom: 12px;
+      max-width: 456px; margin: 0 auto; z-index: 10;
+      background: #1f2a44; border: 1px solid #3f5fa8; border-radius: 12px;
+      padding: 14px 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+    }
+    #lesson-card[hidden] { display: none; }
+    #lesson-card .label { color: #8fb0ff; }
+    #lesson-card h3 { margin: 4px 0 6px; font-size: 1rem; }
+    #lesson-card p { margin: 0 0 8px; font-size: 0.9rem; line-height: 1.4; }
+    #lesson-card a { color: #8fb0ff; }
+    #lesson-card .lesson-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    #lesson-card .lesson-actions button { white-space: nowrap; flex-shrink: 0; }
+    #lesson-card { max-height: 50vh; overflow-y: auto; }
+    body.lesson-open main { padding-bottom: 50vh; }
+    .footer { text-align: center; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .footer button { font-size: 0.85rem; color: #9aa0ad; background: none; }
+    .footer #view-result { color: #fff; background: #2f6fed; }
+    .footer button[hidden] { display: none; }
+    .brand-line { margin: -10px 0 14px; }
+
+    /* Full-screen dialogs: brand name and result card */
+    .overlay {
+      position: fixed; inset: 0; z-index: 20; overflow-y: auto;
+      background: rgba(10, 10, 14, 0.85); padding: 16px;
+      display: flex; align-items: flex-start; justify-content: center;
+    }
+    .overlay[hidden] { display: none; }
+    .dialog {
+      width: 100%; max-width: 440px; margin: auto;
+      background: #22242b; border-radius: 12px; padding: 20px;
+    }
+    .dialog h2 { margin-top: 0; font-size: 1.2rem; }
+    .dialog input {
+      width: 100%; font: inherit; font-size: 1rem; color: inherit; background: #15161a;
+      border: 1px solid #3a3d48; border-radius: 8px; padding: 12px; min-height: 44px;
+    }
+    .dialog canvas { width: 100%; height: auto; border-radius: 8px; display: block; }
+    .dialog a { display: block; margin: 12px 0; color: #8fb0ff; text-align: center; padding: 8px 0; }
+    .dialog-actions { display: flex; gap: 8px; }
+    .dialog-actions button { flex: 1; }
+    .bad-text { color: #ff8a80; min-height: 1.3em; margin: 6px 0; font-size: 0.85rem; }
+    .primary { width: 100%; background: #2f6fed; }
+
+    /* Phones: keep every tap target at least 44px tall, nothing wider than the screen */
+    button, .order-action, .upgrade-buy { min-height: 44px; }
+    #debug { overflow-x: auto; }
+    @media (max-width: 400px) {
+      main { padding: 12px; }
+      .big { font-size: 1.5rem; }
+      .panel { padding: 12px; }
+      #lesson-card { left: 8px; right: 8px; bottom: 8px; }
+    }
   </style>
 </head>
 <body>
   <main>
     <h1>Clothing Brand Mafia</h1>
+    <p class="muted brand-line" id="brand-name"></p>
 
     <div id="welcome-back" hidden>
       <strong>Welcome back!</strong>
@@ -41,20 +132,75 @@
       <button id="welcome-back-close">Collect</button>
     </div>
 
-    <div class="panel">
-      <div class="label">Cash</div>
-      <div class="big" id="cash">$0</div>
+    <div id="unlock-banner" hidden>
+      <strong>New unlock!</strong>
+      <div id="unlock-banner-text"></div>
+      <button id="unlock-banner-close">Nice</button>
     </div>
 
-    <div class="panel">
-      <div class="label">Income</div>
-      <div id="income">$0.00 / sec</div>
+    <div class="stats">
+      <div class="panel">
+        <div class="label">Cash</div>
+        <div class="big" id="cash">$0</div>
+      </div>
+      <div class="panel">
+        <div class="label">Reputation</div>
+        <div class="big" id="reputation">0</div>
+      </div>
     </div>
+    <p id="notice"></p>
 
-    <div class="footer"><button id="reset">Reset progress</button></div>
+    <h2>Orders</h2>
+    <p class="muted" id="no-orders">Waiting for the next order&hellip;</p>
+    <div id="orders"></div>
+
+    <h2>Upgrades</h2>
+    <div id="upgrades"></div>
+
+    <h2>Unlocks</h2>
+    <div class="panel" id="unlocks"></div>
+
+    <section id="debug" class="panel" hidden></section>
+
+    <div class="footer">
+      <button id="view-result" hidden></button>
+      <button id="reset">Reset progress</button>
+    </div>
   </main>
 
+  <div class="overlay" id="brand-overlay" hidden>
+    <form class="dialog" id="brand-form">
+      <h2 id="brand-title"></h2>
+      <p id="brand-text"></p>
+      <input id="brand-input" type="text" autocomplete="off" aria-labelledby="brand-title">
+      <p id="brand-error" class="bad-text"></p>
+      <button type="submit" id="brand-submit" class="primary"></button>
+    </form>
+  </div>
+
+  <div class="overlay" id="result-overlay" hidden>
+    <div class="dialog">
+      <canvas id="result-canvas" width="1080" height="1080"></canvas>
+      <a id="result-link" data-b2b="result-card" href="#" target="_blank" rel="noopener noreferrer"></a>
+      <div class="dialog-actions">
+        <button id="result-download" class="primary"></button>
+        <button id="result-close"></button>
+      </div>
+    </div>
+  </div>
+
+  <aside id="lesson-card" hidden>
+    <div class="label">Lesson</div>
+    <h3 id="lesson-title"></h3>
+    <p id="lesson-body"></p>
+    <div class="lesson-actions">
+      <a id="lesson-link" data-b2b="lesson" href="#" target="_blank" rel="noopener noreferrer"></a>
+      <button id="lesson-close">Got it</button>
+    </div>
+  </aside>
+
   <script src="config.js"></script>
+  <script src="lessons.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

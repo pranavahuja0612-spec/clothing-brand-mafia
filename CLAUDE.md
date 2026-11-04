@@ -45,9 +45,9 @@ Out of scope for now: prestige, the open-world town, accounts, leaderboards, 3D,
 
 ## Progress
 - [x] Day 1: scaffold, loop, save and offline earnings
-- [ ] Day 2: core order loop
-- [ ] Day 3: economy in config.js
-- [ ] Day 4: upgrades and unlocks
-- [ ] Day 5: lesson cards
-- [ ] Day 6: mobile layout and result card
-- [ ] Day 7: playtest, deploy, tracking
+- [x] Day 2: core order loop
+- [x] Day 3: economy in config.js
+- [x] Day 4: upgrades and unlocks
+- [x] Day 5: lesson cards
+- [x] Day 6: mobile layout and result card
+- [x] Day 7: playtest, deploy, tracking (deploy: see README; confirm the live URL loads)
