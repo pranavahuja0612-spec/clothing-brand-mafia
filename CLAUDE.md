@@ -44,7 +44,7 @@ Out of scope for now: prestige, the open-world town, accounts, leaderboards, 3D,
 - Test by opening index.html in a browser before saying a task is done.
 
 ## Progress
-- [ ] Day 1: scaffold, loop, save and offline earnings
+- [x] Day 1: scaffold, loop, save and offline earnings
 - [ ] Day 2: core order loop
 - [ ] Day 3: economy in config.js
 - [ ] Day 4: upgrades and unlocks

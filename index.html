@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clothing Brand Mafia</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #15161a;
+      color: #f2f2f2;
+    }
+    main { max-width: 480px; margin: 0 auto; padding: 16px; }
+    h1 { font-size: 1.4rem; margin: 0 0 16px; }
+    .panel { background: #22242b; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .label { font-size: 0.8rem; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.05em; }
+    .big { font-size: 2rem; font-weight: 700; margin-top: 4px; }
+    #welcome-back {
+      background: #2d4a2f; border: 1px solid #4f8a54;
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    }
+    #welcome-back[hidden] { display: none; }
+    button {
+      font: inherit; color: inherit; background: #3a3d48;
+      border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer;
+    }
+    button:active { background: #4a4e5c; }
+    .footer { text-align: center; margin-top: 24px; }
+    .footer button { font-size: 0.8rem; color: #9aa0ad; background: none; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Clothing Brand Mafia</h1>
+
+    <div id="welcome-back" hidden>
+      <strong>Welcome back!</strong>
+      <p id="welcome-back-text"></p>
+      <button id="welcome-back-close">Collect</button>
+    </div>
+
+    <div class="panel">
+      <div class="label">Cash</div>
+      <div class="big" id="cash">$0</div>
+    </div>
+
+    <div class="panel">
+      <div class="label">Income</div>
+      <div id="income">$0.00 / sec</div>
+    </div>
+
+    <div class="footer"><button id="reset">Reset progress</button></div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
