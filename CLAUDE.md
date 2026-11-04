@@ -50,4 +50,4 @@ Out of scope for now: prestige, the open-world town, accounts, leaderboards, 3D,
 - [x] Day 4: upgrades and unlocks
 - [x] Day 5: lesson cards
 - [x] Day 6: mobile layout and result card
-- [x] Day 7: playtest, deploy, tracking (deploy: see README; confirm the live URL loads)
+- [ ] Day 7: playtest, deploy, tracking (playtest and tracking done; still to do: push to GitHub, enable Pages, confirm the live URL loads)
