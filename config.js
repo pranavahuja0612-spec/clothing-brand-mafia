@@ -2,8 +2,8 @@
 // Money is in dollars. Game seconds are compressed: one game second stands
 // in for a good chunk of real shop time.
 const CONFIG = {
-  saveKey: "clothingBrandMafia.save.v1",
-  saveVersion: 1,
+  saveKey: "clothingBrandMafia.save.v1",   // kept so older saves still load
+  saveVersion: 2,                          // 2 = Week 2 (missions, level, zones, rebrand)
 
   // The B2B page every lesson card links to. PLACEHOLDER: replace with the
   // real address before launch (example.com is a reserved demo domain).
@@ -252,6 +252,29 @@ const CONFIG = {
       description: "Our partner Kpda Karkhana now sends big bulk orders with a higher minimum and a better price.",
       requires: { stat: "reputation", min: 8, label: "reputation" },
     },
+  },
+
+  // ---------------------------------------------------------------------
+  // MISSIONS. Text and order are in missions.js. Here: the target
+  // (`amount`, used by gain and reach goals) and the reward for each one.
+  // Rewards grow as the missions get harder.
+  // ---------------------------------------------------------------------
+  missions: {
+    "first-order":       { amount: 1,    cash: 50,  xp: 30 },
+    "small-run":         { amount: 1,    cash: 60,  xp: 30 },
+    "steady-hands":      { amount: 3,    cash: 80,  xp: 40 },
+    "first-upgrade":     { amount: 1,    cash: 100, xp: 40 },
+    "price-for-profit":  { amount: 1500, cash: 150, xp: 60 },
+    "go-digital":        {               cash: 150, xp: 60 },
+    "test-run":          { amount: 1,    cash: 200, xp: 80 },
+    "packing-room":      {               cash: 200, xp: 80 },
+    "cash-cushion":      { amount: 1500, cash: 250, xp: 100 },
+    "needle-and-thread": {               cash: 250, xp: 100 },
+    "first-stitch":      { amount: 1,    cash: 300, xp: 120 },
+    "go-big":            { amount: 1,    cash: 350, xp: 140 },
+    "win-the-partner":   {               cash: 400, xp: 160 },
+    "bulk-desk":         {               cash: 400, xp: 160 },
+    "first-bulk-deal":   { amount: 1,    cash: 500, xp: 200 },
   },
 
   // Quantities shown in the debug table (open index.html?debug=1).

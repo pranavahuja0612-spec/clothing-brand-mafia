@@ -58,6 +58,12 @@
     .step { flex: 1; text-align: center; font-size: 0.75rem; padding: 4px 0; border-radius: 6px; background: #2c2f38; color: #9aa0ad; }
     .step.done { background: #2d4a2f; color: #bfe8c4; }
     .step.current { background: #2f4a7a; color: #fff; }
+    .mission { margin-top: 12px; border: 1px solid #3f5fa8; }
+    .mission .label { color: #8fb0ff; }
+    .mission strong { display: block; margin-top: 4px; font-size: 1.05rem; }
+    .mission p { margin: 4px 0 0; font-size: 0.85rem; }
+    .mission .bar-fill { background: #7fd48a; transition: width 0.3s; }
+    .mission-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 0.85rem; }
     #debug[hidden] { display: none; }
     #debug table td { font-size: 0.7rem; }
     .order-notes p { margin: 4px 0 0; font-size: 0.8rem; color: #9aa0ad; }
@@ -148,6 +154,17 @@
         <div class="big" id="reputation">0</div>
       </div>
     </div>
+    <section class="panel mission" id="mission">
+      <div class="label" id="mission-label"></div>
+      <strong id="mission-title"></strong>
+      <p class="muted" id="mission-desc"></p>
+      <div class="bar"><div class="bar-fill" id="mission-fill"></div></div>
+      <div class="mission-foot">
+        <span id="mission-progress"></span>
+        <span class="muted" id="mission-reward"></span>
+      </div>
+    </section>
+
     <p id="notice"></p>
 
     <h2>Orders</h2>
@@ -201,6 +218,7 @@
 
   <script src="config.js"></script>
   <script src="lessons.js"></script>
+  <script src="missions.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

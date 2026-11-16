@@ -25,6 +25,10 @@ function newState() {
     flags: {},         // one-off things the player has seen (used by lesson triggers)
     lessonsSeen: [],   // lesson card ids already shown
     milestoneReached: false,
+    stats: {},         // counters missions watch, e.g. shippedSmall, upgradesBought
+    missionIndex: 0,   // which mission in missions.js is active
+    missionBaseline: 0,  // value of the watched counter when the mission started
+    xp: 0,             // lifetime experience points
     orders: [],
     nextOrderId: 1,
     nextOrderIn: CONFIG.orders.firstOrderDelaySec,
@@ -124,6 +128,7 @@ function buyUpgrade(id) {
   if (level >= upgrade.maxLevel || state.cash < cost) return;
   state.cash -= cost;
   state.upgrades[id] = level + 1;
+  addStat("upgradesBought");
   saveGame();
   render();
 }
@@ -350,10 +355,14 @@ function shipOrder(order) {
     CONFIG.reputation.max,
     state.reputation + CONFIG.reputation.gainPerShippedOrder
   );
+  addStat(`shipped_${order.typeId || "screen"}`);
+  if (order.pricing && order.pricing.belowMoq) addStat("shippedSmall");
+  if (order.pricing && order.pricing.discountRate > 0) addStat("shippedBulk");
   removeOrder(order);
   showNotice(`Order #${order.id} shipped: +${formatMoney(order.value)}`, "good");
   if (state.ordersShipped === 1) track("firstOrderShipped");
   checkUnlocks();
+  checkMissions();
   checkMilestone();
   saveGame();
 }
@@ -386,8 +395,13 @@ function advanceOrders(dt) {
 
 // ---------- Unlocks ----------
 
+// A saved number by name: a counter in state.stats, or a top-level field.
 function statValue(stat) {
-  return state[stat];
+  return state.stats[stat] ?? state[stat] ?? 0;
+}
+
+function addStat(stat, amount = 1) {
+  state.stats[stat] = (state.stats[stat] || 0) + amount;
 }
 
 function checkUnlocks() {
@@ -402,6 +416,117 @@ function checkUnlocks() {
 function announceUnlock(unlock) {
   unlockMessages.push(`${unlock.name}: ${unlock.description}`);
   showUnlockBanner();
+}
+
+// ---------- Missions ----------
+
+// Fill "{name}" placeholders in a text template.
+function fillText(template, values) {
+  return template.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
+}
+
+function currentMission() {
+  return MISSIONS[state.missionIndex] || null;
+}
+
+function missionSettings(mission) {
+  return CONFIG.missions[mission.id] || {};
+}
+
+function missionTitle(mission) {
+  const amount = missionSettings(mission).amount;
+  return fillText(mission.title, { amount: mission.goal.money ? formatMoney(amount || 0) : amount });
+}
+
+function isZoneOpen(zoneId) {
+  return (state.zonesUnlocked || []).includes(zoneId);
+}
+
+// How far the active mission has come, as { current, target }.
+function missionProgress(mission) {
+  const goal = mission.goal;
+  const target = missionSettings(mission).amount || 1;
+  if (goal.type === "gain") return { current: Math.max(0, statValue(goal.stat) - state.missionBaseline), target };
+  if (goal.type === "reach") return { current: statValue(goal.stat), target };
+  if (goal.type === "unlock") return { current: state.unlocked.includes(goal.id) ? 1 : 0, target: 1 };
+  if (goal.type === "zone") return { current: isZoneOpen(goal.id) ? 1 : 0, target: 1 };
+  return { current: 0, target: 1 };
+}
+
+function isMissionDone(mission) {
+  const p = missionProgress(mission);
+  return p.current >= p.target;
+}
+
+// Make the mission at state.missionIndex active and remember where its
+// counter started, so "Ship 3 orders" counts from now.
+function startMission() {
+  const mission = currentMission();
+  state.missionBaseline = mission && mission.goal.type === "gain" ? statValue(mission.goal.stat) : 0;
+}
+
+function completeMission(mission) {
+  const reward = missionSettings(mission);
+  state.cash += reward.cash || 0;
+  gainXp(reward.xp || 0);
+  addStat("missionsCompleted");
+  showNotice(fillText(MISSION_TEXT.completed, {
+    title: missionTitle(mission), cash: formatMoney(reward.cash || 0), xp: reward.xp || 0,
+  }), "good");
+  state.missionIndex += 1;
+  startMission();
+}
+
+// Complete the active mission when its goal is met. Several can finish in
+// a row if the player already meets the next goals.
+function checkMissions() {
+  let mission = currentMission();
+  let finished = false;
+  while (mission && isMissionDone(mission)) {
+    completeMission(mission);
+    finished = true;
+    mission = currentMission();
+  }
+  if (finished) saveGame();
+}
+
+// Experience points. Levels come in Part 2.
+function gainXp(amount) {
+  state.xp += amount;
+}
+
+// ---------- Save migration ----------
+
+// Older saves are upgraded in place, never wiped. Each step moves a save
+// from one version to the next.
+function migrateSave(saved) {
+  const s = { ...newState(), ...saved };
+  if ((saved.version || 1) < 2) migrateToV2(s);
+  s.version = CONFIG.saveVersion;
+  return s;
+}
+
+// Version 1 (Week 1) -> 2: add counters and missions. Missions the player
+// had clearly already done are marked complete, without paying rewards.
+function migrateToV2(s) {
+  s.stats = { upgradesBought: Object.values(s.upgrades || {}).reduce((a, b) => a + b, 0) };
+  s.missionIndex = 0;
+  s.missionBaseline = 0;
+  const previous = state;
+  state = s;
+  while (currentMission() && alreadyDoneBeforeMissions(currentMission())) {
+    state.missionIndex += 1;
+  }
+  startMission();
+  state = previous;
+}
+
+// For an old save, a "gain" goal counts as done if the lifetime total
+// already covers it (for counters an old save actually has).
+function alreadyDoneBeforeMissions(mission) {
+  const goal = mission.goal;
+  if (goal.type !== "gain") return isMissionDone(mission);
+  return statValue(goal.stat) >= (missionSettings(mission).amount || 1);
 }
 
 // ---------- Save / load ----------
@@ -421,7 +546,7 @@ function loadGame() {
     if (!raw) return null;
     const saved = JSON.parse(raw);
     if (typeof saved.cash !== "number" || typeof saved.lastSeen !== "number") return null;
-    return { ...newState(), ...saved };
+    return migrateSave(saved);
   } catch (e) {
     return null;
   }
@@ -473,7 +598,37 @@ const el = {
   resultDownload: document.getElementById("result-download"),
   resultClose: document.getElementById("result-close"),
   viewResult: document.getElementById("view-result"),
+  missionLabel: document.getElementById("mission-label"),
+  missionTitle: document.getElementById("mission-title"),
+  missionDesc: document.getElementById("mission-desc"),
+  missionFill: document.getElementById("mission-fill"),
+  missionProgress: document.getElementById("mission-progress"),
+  missionReward: document.getElementById("mission-reward"),
 };
+
+function renderMission() {
+  const mission = currentMission();
+  if (!mission) {
+    el.missionLabel.textContent = "";
+    el.missionTitle.textContent = MISSION_TEXT.allDoneTitle;
+    el.missionDesc.textContent = MISSION_TEXT.allDoneBody;
+    el.missionFill.style.width = "100%";
+    el.missionProgress.textContent = "";
+    el.missionReward.textContent = "";
+    return;
+  }
+  const p = missionProgress(mission);
+  const show = (n) => (mission.goal.money ? formatMoney(n) : formatNumber(n));
+  const reward = missionSettings(mission);
+  el.missionLabel.textContent = fillText(MISSION_TEXT.label, { n: state.missionIndex + 1, total: MISSIONS.length });
+  el.missionTitle.textContent = missionTitle(mission);
+  el.missionDesc.textContent = mission.description;
+  el.missionFill.style.width = `${Math.min(100, (100 * p.current) / p.target)}%`;
+  el.missionProgress.textContent = fillText(MISSION_TEXT.progress, {
+    current: show(Math.min(p.current, p.target)), target: show(p.target),
+  });
+  el.missionReward.textContent = fillText(MISSION_TEXT.reward, { cash: formatMoney(reward.cash || 0), xp: reward.xp || 0 });
+}
 
 function showNotice(text, kind) {
   el.notice.textContent = text;
@@ -673,6 +828,7 @@ function render() {
   el.reputation.textContent = formatNumber(state.reputation);
   el.brand.textContent = state.brandName;
   el.viewResult.hidden = !state.milestoneReached;
+  renderMission();
   renderOrders();
   renderUpgrades();
   renderUnlocks();
@@ -958,6 +1114,7 @@ function tick() {
   } else {
     advanceGame(dt);
   }
+  checkMissions();
   checkLessons();
   render();
 }
