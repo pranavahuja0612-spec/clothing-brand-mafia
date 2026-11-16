@@ -30,7 +30,9 @@ All code in this repository was written for this project, except:
   only exists as an ES module, and browsers block loading model files when
   the game is opened from disk. If Kenney models are added later, record
   each pack here with its licence before adding it.
-- **Fonts:** the visitor's system fonts. **Images and audio:** none.
+- **Fonts:** the visitor's system fonts. **Images:** none.
+- **Sound effects:** made in the browser with the Web Audio API (`sound.js`),
+  from simple tones and noise. No sound files are used.
 
 ## Text
 

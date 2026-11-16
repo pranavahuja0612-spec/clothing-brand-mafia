@@ -44,6 +44,12 @@ const CONFIG = {
   tracking: {
     storageKey: "clothingBrandMafia.events.v1",
     goatcounterCode: "",
+    // Week 5: time to first sale and first unlock (seconds of play on a
+    // fresh save) and session length are tracked in these buckets.
+    firstSaleBucketsSec: [30, 60, 120, 300],
+    firstUnlockBucketsSec: [60, 180, 600, 1800],
+    sessionBucketsSec: [60, 180, 600, 1800],
+    newSessionAfterSec: 1800,   // hidden this long = the next visit is a new session
   },
 
   startingCash: 300,
@@ -186,6 +192,10 @@ const CONFIG = {
       effect: { type: "partCost", part: "ink", perLevel: 0.05 } },   // fewer misprints and wasted ink
     { id: "staff", name: "Staff", zone: "printFloor", maxLevel: 5, baseCost: 200, costGrowth: 1.8,
       effect: { type: "stepTime", step: "all", perLevel: 0.06 } },
+    // Week 5: how many items you and your staff carry at once. Only used by
+    // the carry loop in the 3D view, so the 2D page hides it.
+    { id: "bags", name: "Bigger bags", zone: "printFloor", maxLevel: 5, baseCost: 80, costGrowth: 1.7,
+      carryOnly: true, effect: { type: "carry", perLevel: 2 } },
 
     // Cut & Sew: making blanks in-house is cheaper than buying them in.
     { id: "cuttingTable", name: "Cutting table", zone: "cutSew", maxLevel: 5, baseCost: 300, costGrowth: 1.8,
@@ -396,7 +406,7 @@ const CONFIG = {
     panLimit: 12,            // how far the view can be dragged from the centre
     // Shop layout: each zone is a square `zoneSize` wide, placed on a grid
     // (column, row). The loading dock sits at `dockCell`.
-    zoneSize: 8,
+    zoneSize: 10,            // Week 5: bigger rooms to walk around in
     zoneGap: 0.6,
     layout: {
       cutSew: [-1, 0],
@@ -424,7 +434,14 @@ const CONFIG = {
         embroideryCorner: "#2fa38a",
         bulkDesk: "#c9a23c",
       },
-      tees: { screen: "#f2f2f2", dtg: "#ff7a7a", embroidery: "#7fd48a", kpda: "#ffd166" },
+      tees: { screen: "#4dabf7", dtg: "#ff7a7a", embroidery: "#7fd48a", kpda: "#ffd166" },
+      blank: "#f8f9fa",
+      box: "#c08552",
+      player: "#ffd43b",
+      tileReady: "#7fd48a",
+      tileLocked: "#868e96",
+      tileFill: "#ffd166",
+      coin: "#ffc53d",
       shirt: ["#ff6b6b", "#4dabf7", "#ffd43b"],
     },
     text: {
@@ -432,6 +449,9 @@ const CONFIG = {
       viewLabel: "Shop view",
       view3d: "3D view",
       view2d: "2D view",
+      soundLabel: "Sound",
+      soundOn: "Sound on",
+      soundOff: "Sound off",
       close: "Done",
       noteNoWebgl: "3D is not available on this device, so the game uses the 2D view.",
       noteSlow: "The game switched to the 2D view because 3D ran slowly on this device. You can try 3D again.",
@@ -446,6 +466,101 @@ const CONFIG = {
       dockLabel: "Loading dock",
     },
   },
+
+  // ---------------------------------------------------------------------
+  // CARRY LOOP (Week 5). In the 3D view you walk the order through the shop:
+  // pick up blanks at the fabric rack, drop them at the press, take the
+  // printed tees to the packing table, then load the boxes onto the van.
+  // The economy is the same as the 2D page: each step costs what `steps`
+  // says, paid when the first item of an order enters that step, and the
+  // press and packing table take the step's time from `steps` (so the time
+  // upgrades still work), shared over the order's items.
+  // ---------------------------------------------------------------------
+  carry: {
+    // An order is carried as a number of items (a bundle of tees each):
+    // items = tees / teesPerItem, rounded up, kept between min and max.
+    teesPerItem: 5,
+    minItemsPerOrder: 2,
+    maxItemsPerOrder: 20,
+    stackBase: 4,              // items you can carry at first; "Bigger bags" adds more
+    staffPerLevel: 1,          // carriers hired per level of the Staff upgrade
+    playerSpeed: 6.5,          // world units per second
+    staffSpeed: 4.2,
+    pickSeconds: 0.12,         // time to move one item on or off a stack
+    reach: 1.15,               // how close to a station you must stand
+    tileRadius: 0.95,          // padlock and upgrade tiles
+    tileFillSeconds: 1.1,      // how long cash takes to drain into a tile
+    staffThinkSeconds: 0.5,    // how often an idle carrier looks for work
+    firstOrder: { typeId: "screen", quantity: 10, delaySec: 1 },   // tutorial order on a fresh save
+    idleHintSeconds: 5,        // after the first sale the arrow shows when you stand still this long
+    bannerSeconds: 4,          // "Shop news" (level up, zone opened) hides itself after this long
+    shakeSeconds: 0.35,
+    shakeStrength: 0.35,
+    cameraZoom: 1.55,          // closer than the old overview, since the camera follows you
+    // Station spots (where a carrier stands) and models, in a zone's local
+    // coordinates. "dock" is the loading dock.
+    stations: {
+      rack:       { zone: "printFloor", spot: [-2.6, -2.4], model: [-3.7, -3.5] },
+      press:      { zone: "printFloor", spot: [1.0, -0.2],  model: [1.5, -2.5] },
+      embroidery: { zone: "embroideryCorner", spot: [0, 0.4], model: [0, -1.6] },
+      pack:       { zone: "printFloor", spot: [-2.6, 2.0],  model: [-3.9, 2.8] },
+      van:        { zone: "dock", spot: [0, 0.4], model: [0, 3.0] },
+    },
+    // Upgrade tiles: one per upgrade, beside its machine (zone-local).
+    upgradeTiles: {
+      bags: [-0.4, -3.9],
+      press: [3.7, -1.0],
+      flash: [3.0, -3.9],
+      dryer: [1.4, 3.3],
+      staff: [-3.0, -2.6],      // on the loading dock
+      cuttingTable: [0, 1.6],
+      packingStation: [-1.8, 1.2],
+      bulkPackaging: [1.8, 1.2],
+      multiHead: [2.8, 2.2],
+      accountManager: [0, 2.2],
+    },
+    // Padlock tiles in front of each locked zone: which open area the tile
+    // stands in, and where (local to that area).
+    zoneGates: {
+      cutSew: { in: "printFloor", at: [-4.2, -0.2] },
+      embroideryCorner: { in: "printFloor", at: [4.2, 1.2] },
+      packing: { in: "dock", at: [-4.2, 0.6] },
+      bulkDesk: { in: "dock", at: [4.2, 0.6] },
+    },
+    restSpot: [2.6, -3.8],      // where idle staff wait, on the dock (next to the Print Floor)
+    text: {
+      grabBlanks: "Grab blanks",
+      toPress: "Print them",
+      toEmbroidery: "Stitch them",
+      printing: "Printing…",
+      grabPrinted: "Grab the prints",
+      toPack: "Pack them",
+      packing: "Packing…",
+      grabBoxes: "Grab the boxes",
+      toVan: "Load the van",
+      waitOrder: "Next order coming",
+      buyTile: "Stand here",
+      openZone: "Open it",
+      needCash: "Need {cash}",
+      maxed: "MAX",
+      levelGate: "Level {n}",
+      cashGate: "Hold {cash}",
+      ready: "Open!",
+      staffDesc: "hires a carrier per level",
+      carryDesc: "carry {n} more items",
+      walkToBuy: "Walk onto the tile beside a machine to buy its upgrade.",
+      orderStage: ["Blanks", "Print", "Pack", "Van"],
+    },
+  },
+
+  // Sound effects are made in the browser (Web Audio), no sound files.
+  // Players can switch them off in Settings.
+  sound: {
+    volume: 0.35,
+  },
+
+  // Lesson cards wait for the first sale, then come at most this often.
+  lessonGapSeconds: 25,
 
   // Quantities shown in the debug table (open index.html?debug=1).
   debug: {

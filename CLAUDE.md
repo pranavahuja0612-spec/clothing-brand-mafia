@@ -24,7 +24,10 @@ A free, browser-based idle/tycoon game where the player runs a small clothing an
 - config.js: ALL numbers (prices, costs, upgrade levels, unlock thresholds). Balancing happens only here.
 - lessons.js: lesson cards (id, trigger, title, body, link to B2B page)
 - missions.js: mission text and order (targets and rewards are numbers, so they live in config.js under `missions`)
-- scene3d.js: the 3D isometric view. Presentation only: it reads `state` every frame and must never change it. Its numbers and words live in config.js under `view3d`.
+- carry.js: the carry loop played in the 3D view (Week 5): stations, carried items, the player, staff, padlock and upgrade tiles, the guide arrow, order chips. It moves orders through the same steps and costs as game.js; its numbers and words live in config.js under `carry`.
+- input.js: keyboard (WASD/arrows) and the floating virtual joystick.
+- sound.js: sound effects made with Web Audio (no sound files); on/off in Settings.
+- scene3d.js: the 3D isometric view. It draws `state` and carry.js every frame and calls `Carry.update()`; it never changes the game itself. Its numbers and words live in config.js under `view3d`.
 - vendor/: third-party files kept unmodified (three.js r159, MIT). Record each in CREDITS.md before adding it.
 - Saves carry a `version`. When the save shape changes, bump `saveVersion` in config.js and add a migration step in game.js (`migrateSave`). Never wipe old saves.
 - Keep the code readable. Short functions, clear names, comments only where they help.
@@ -40,7 +43,7 @@ A free, browser-based idle/tycoon game where the player runs a small clothing an
 3. Three unlocks: DTG printing, embroidery, Kpda Karkhana bulk client.
 4. Six lesson cards: cost per tee, MOQ, GSM, print method, deadstock, returns.
 5. Mobile-friendly layout and a shareable result card.
-Out of scope for now: the open-world town, accounts, leaderboards, sound. (Prestige was added in Week 2 as "Rebrand", and a 3D isometric view in Week 3, both at the owner's request.)
+Out of scope for now: the open-world town, accounts, leaderboards. (Prestige was added in Week 2 as "Rebrand", a 3D isometric view in Week 3, and the carry loop with sound in Week 5, all at the owner's request.)
 
 ## Week 2 scope
 1. Missions: one active at a time, banner with progress bar, pays cash and XP. 15 missions from first order to first Kpda Karkhana bulk deal, in missions.js.
@@ -60,6 +63,17 @@ Old saves must keep loading: migrate, never wipe.
 5. Missions, cash, level and lesson cards stay as an HTML overlay, styled like a mobile game.
 6. 30fps or more on a mid-range Android phone, total assets under 5 MB, automatic fallback to the 2D view if WebGL fails or the device is slow, plus a 3D/2D toggle in Settings.
 7. Track which view is used and the load time.
+
+## Week 5 scope
+Rework the core loop to play like a hyper-casual tycoon (move, carry, deliver, unlock). Economy, lessons, missions and saves stay unchanged.
+1. Player character: virtual joystick on phones, WASD/arrows on desktop; the camera follows.
+2. Carry loop: blanks from the fabric rack (stacked on the back) to the press, printed tees to packing, boxes onto the van. Stack size upgradeable ("Bigger bags").
+3. Staff (the Staff upgrade, one carrier per level) run the same loop on their own.
+4. Padlock tiles in front of locked zones and upgrade tiles beside machines: stand on one to drain cash into it with a fill bar; it unlocks with a burst. Replaces the upgrade buttons in 3D.
+5. Game feel: squash and stretch on pickups, coin bursts, floating money numbers, camera shake on unlock, button press feedback, a sound per action (respects the Settings toggle).
+6. First two minutes: first sale within 30 seconds, guided by an arrow, no text walls; lesson cards wait until after the first sale.
+7. Track time to first sale, time to first unlock, session length.
+The 2D page keeps the button-driven loop as the fallback.
 
 ## Working style
 - Ask before adding a feature outside the scope above.
@@ -95,5 +109,18 @@ Old saves must keep loading: migrate, never wipe.
 - [x] Automatic 2D fallback (no WebGL, or under 25fps) and Settings toggle
 - [x] Tracking: view used, load time bucket, automatic switch to 2D
 - [x] Tested at 360x740 and 1280x760, WebGL off, forced slow device, long run with a reset; 804 KB total
+- [ ] Not yet measured on a real mid-range Android phone (owner to check by hand)
+- [x] Deploy
+
+### Week 5
+- [x] Playtest of the old loop: 5 reasons it felt boring written down
+- [x] Player with joystick and WASD/arrows, follow camera, pinch/scroll zoom
+- [x] Carry loop (carry.js): items per order from config, machines work one item per order at a time, costs paid as each step starts; save shape unchanged, items rebuilt from each order's step on load
+- [x] Staff carriers from the Staff upgrade; "Bigger bags" upgrade for stack size (3D only)
+- [x] Padlock and upgrade tiles with cash drain, fill bar, burst and shake; zones open by tile in 3D (still by themselves in 2D)
+- [x] Game feel: squash/stretch, coins, floating numbers, shake, button pop, Web Audio sounds with Settings toggle
+- [x] First two minutes: fixed 10-tee first order, guide arrow, upgrade tiles and lessons hidden until the first sale (test bot: first sale in 16s)
+- [x] Tracking: timeToFirstSale, timeToFirstUnlock, sessionLength (buckets, plus seconds in the event log)
+- [x] Tested: fresh save, Day 7 save, 2D/3D switch mid-order (refunds steps paid ahead), WebGL off, 360x740 and 1280x760, 5 staff stress test (59fps, 139 draw calls); 888 KB total
 - [ ] Not yet measured on a real mid-range Android phone (owner to check by hand)
 - [x] Deploy

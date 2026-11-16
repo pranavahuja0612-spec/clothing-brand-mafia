@@ -80,6 +80,17 @@ function setFlag(name) {
   state.flags[name] = true;
 }
 
+// True while the 3D carry loop (carry.js) runs the shop. Then the player
+// moves orders by carrying them, so step timers, zone opening and the
+// upgrade buttons are handed over to it.
+function carryActive() {
+  return typeof Carry !== "undefined" && Carry.isActive();
+}
+
+function playSound(name, detail) {
+  if (typeof Sound !== "undefined") Sound.play(name, detail);
+}
+
 function partLabel(part) {
   return COST_PARTS.find(([p]) => p === part)[1];
 }
@@ -127,6 +138,7 @@ function payMultiplier(typeId) {
 function describeEffect(upgrade, level) {
   if (level === 0) return "no bonus yet";
   const e = upgrade.effect;
+  if (e.type === "carry") return fillText(CONFIG.carry.text.carryDesc, { n: e.perLevel * level });
   const forType = e.orderType ? ` on ${orderType(e.orderType).label} orders` : "";
   if (e.type === "orderPay") {
     const who = e.orderType ? `${orderType(e.orderType).label} orders` : "Orders";
@@ -137,21 +149,29 @@ function describeEffect(upgrade, level) {
     const step = CONFIG.steps.find((s) => s.id === e.step);
     const stepName = e.orderType ? orderType(e.orderType).stepLabels[e.step] || step.label : step && step.label;
     const what = e.step === "all" ? "Every step" : stepName;
-    return `${what} takes ${cut} less time${forType}`;
+    const hires = upgrade.id === "staff" && carryActive() ? `; ${CONFIG.carry.text.staffDesc}` : "";
+    return `${what} takes ${cut} less time${forType}${hires}`;
   }
   return `${partLabel(e.part)} costs ${cut} less${forType}`;
 }
 
-function buyUpgrade(id) {
+function canBuyUpgrade(id) {
   const upgrade = CONFIG.upgrades.find((u) => u.id === id);
-  const level = upgradeLevel(id);
-  const cost = upgradeCost(upgrade);
-  if (!isZoneOpen(upgrade.zone) || level >= upgrade.maxLevel || state.cash < cost) return;
-  state.cash -= cost;
-  state.upgrades[id] = level + 1;
+  return isZoneOpen(upgrade.zone) && upgradeLevel(id) < upgrade.maxLevel && state.cash >= upgradeCost(upgrade);
+}
+
+// Returns true when the upgrade was bought.
+function buyUpgrade(id) {
+  if (!canBuyUpgrade(id)) return false;
+  const upgrade = CONFIG.upgrades.find((u) => u.id === id);
+  state.cash -= upgradeCost(upgrade);
+  state.upgrades[id] = upgradeLevel(id) + 1;
   addStat("upgradesBought");
+  trackFirstUnlock();
+  playSound("unlock");
   saveGame();
   render();
+  return true;
 }
 
 // ---------- Economy ----------
@@ -269,10 +289,17 @@ function stepLabel(order, step) {
 function committedCosts() {
   let total = 0;
   for (const order of state.orders) {
-    const firstUnpaid = order.running ? order.stepIndex + 1 : order.stepIndex;
-    CONFIG.steps.slice(firstUnpaid).forEach((step) => { total += stepCost(order, step); });
+    unpaidSteps(order).forEach((step) => { total += stepCost(order, step); });
   }
   return total;
+}
+
+// Steps of this order not paid for yet. In the carry loop an order can have
+// items in two steps at once, so carry.js keeps that count itself.
+function unpaidSteps(order) {
+  if (carryActive()) return Carry.unpaidSteps(order);
+  const firstUnpaid = order.running ? order.stepIndex + 1 : order.stepIndex;
+  return CONFIG.steps.slice(firstUnpaid);
 }
 
 // Sizes of this type the player could plausibly pay for, after setting
@@ -288,6 +315,13 @@ function affordableQuantities(typeId) {
 // Choose an unlocked type (weighted) that has a size the player can afford.
 // Returns null when nothing is affordable, so no order arrives.
 function pickTypeAndQuantity() {
+  // A fresh save always starts with the same small order, so the first sale
+  // comes quickly.
+  const first = CONFIG.carry.firstOrder;
+  if (state.nextOrderId === 1 && state.ordersShipped === 0 &&
+      calcOrderEconomics(first.quantity, first.typeId).totalCost <= state.cash) {
+    return { typeId: first.typeId, quantity: first.quantity };
+  }
   const candidates = Object.keys(CONFIG.orderTypes).filter(
     (id) => isTypeAvailable(id) && affordableQuantities(id).length > 0
   );
@@ -386,8 +420,12 @@ function shipOrder(order) {
   removeOrder(order);
   const xp = orderXp(order);
   showNotice(`Order #${order.id} shipped: +${formatMoney(order.value)}, +${xp} XP`, "good");
+  playSound("sale");
   gainXp(xp);
-  if (state.ordersShipped === 1) track("firstOrderShipped");
+  if (state.ordersShipped === 1) {
+    track("firstOrderShipped");
+    trackFirstTime("timeToFirstSale", CONFIG.tracking.firstSaleBucketsSec);
+  }
   checkUnlocks();
   checkMissions();
   checkMilestone();
@@ -395,6 +433,7 @@ function shipOrder(order) {
 }
 
 function failOrder(order) {
+  playSound("fail");
   state.reputation = Math.max(0, state.reputation - CONFIG.reputation.lossPerMissedDeadline);
   removeOrder(order);
   showNotice(
@@ -411,7 +450,7 @@ function removeOrder(order) {
 function advanceOrders(dt) {
   for (const order of [...state.orders]) {
     order.deadline -= dt;
-    if (order.running) {
+    if (order.running && !carryActive()) {
       order.stepLeft -= dt;
       if (order.stepLeft <= 0) finishStep(order);
     }
@@ -492,17 +531,33 @@ function zoneRequirementText(zone) {
   return "";
 }
 
-// Open every padlocked zone whose threshold is now met.
+// Open every padlocked zone whose threshold is now met. In the carry loop
+// the player opens a zone by standing on its padlock tile instead.
 function checkZones() {
+  if (carryActive()) return;
   for (const zone of CONFIG.zones) {
-    if (!zone.requires || state.zonesUnlocked.includes(zone.id) || !zoneRequirementMet(zone)) continue;
-    state.zonesUnlocked.push(zone.id);
-    track("zoneUnlocked", zone.id);
-    const opens = CONFIG.upgrades.filter((u) => u.zone === zone.id).map((u) => u.name).join(", ");
-    unlockMessages.push(`Zone unlocked: ${zone.name}. New upgrades: ${opens}.`);
-    showUnlockBanner();
-    saveGame();
+    if (canOpenZone(zone.id)) openZone(zone.id);
   }
+}
+
+function canOpenZone(zoneId) {
+  const zone = zoneConfig(zoneId);
+  return Boolean(zone && zone.requires && !state.zonesUnlocked.includes(zoneId) && zoneRequirementMet(zone));
+}
+
+// Returns true when the zone was opened.
+function openZone(zoneId) {
+  if (!canOpenZone(zoneId)) return false;
+  const zone = zoneConfig(zoneId);
+  state.zonesUnlocked.push(zone.id);
+  track("zoneUnlocked", zone.id);
+  trackFirstUnlock();
+  playSound("unlock");
+  const opens = CONFIG.upgrades.filter((u) => u.zone === zone.id).map((u) => u.name).join(", ");
+  unlockMessages.push(`Zone unlocked: ${zone.name}. New upgrades: ${opens}.`);
+  showUnlockBanner();
+  saveGame();
+  return true;
 }
 
 // How far the active mission has come, as { current, target }.
@@ -581,6 +636,7 @@ function gainXp(amount) {
   const level = levelInfo(state.xp).level;
   if (level > state.level) {
     state.level = level;
+    playSound("level");
     unlockMessages.push(`Level up! You reached level ${level}.`);
     showUnlockBanner();
   }
@@ -723,6 +779,8 @@ function resetGame() {
   hideLesson();
   hideResultCard();
   showNotice("");
+  resetPlayClock();
+  if (typeof Carry !== "undefined") Carry.reset();
   ensureBrandName();
   render();
 }
@@ -774,6 +832,7 @@ const el = {
   missionFill: document.getElementById("mission-fill"),
   missionProgress: document.getElementById("mission-progress"),
   missionReward: document.getElementById("mission-reward"),
+  upgradeHint: document.getElementById("upgrade-hint"),
 };
 
 function renderLevel() {
@@ -827,9 +886,14 @@ function hideWelcomeBack() {
   el.welcome.hidden = true;
 }
 
+let unlockBannerTimer = 0;
+
 function showUnlockBanner() {
   el.unlockText.innerHTML = unlockMessages.map((m) => `<p>${m}</p>`).join("");
   el.unlockBanner.hidden = false;
+  // In the 3D shop the news clears itself, so it never sits over the floor.
+  clearTimeout(unlockBannerTimer);
+  if (carryActive()) unlockBannerTimer = setTimeout(hideUnlockBanner, CONFIG.carry.bannerSeconds * 1000);
 }
 
 function hideUnlockBanner() {
@@ -939,6 +1003,13 @@ function updateOrderCard(card, order) {
   const label = stepLabel(order, step);
   const button = card.querySelector(".order-action");
   const cost = stepCost(order, step);
+  if (carryActive()) {
+    button.textContent = Carry.orderStatus(order);
+    button.disabled = true;
+    button.classList.add("carry-status");
+    return;
+  }
+  button.classList.remove("carry-status");
   if (order.running) {
     button.textContent = `${label}… ${Math.ceil(order.stepLeft)}s`;
     button.disabled = true;
@@ -1001,8 +1072,11 @@ function renderUpgrades() {
     panel.querySelector(".zone-upgrades").hidden = !open;
     if (!open) panel.querySelector(".zone-lock-need").textContent = zoneRequirementText(zone);
   }
+  const carrying = carryActive();
+  el.upgradeHint.hidden = !carrying;
   for (const u of CONFIG.upgrades) {
     const row = el.upgrades.querySelector(`[data-upgrade="${u.id}"]`);
+    if (row) row.hidden = Boolean(u.carryOnly && !carrying);
     if (!row || !isZoneOpen(u.zone)) continue;
     const level = upgradeLevel(u.id);
     const maxed = level >= u.maxLevel;
@@ -1020,6 +1094,7 @@ function renderUpgrades() {
       : `Upgrade · ${formatMoney(cost)}${leavesShort ? " · leaves open orders short" : ""}`;
     button.classList.toggle("warn", leavesShort);
     button.disabled = maxed || state.cash < cost;
+    button.hidden = carrying;   // in 3D you buy by standing on the tile
   }
 }
 
@@ -1035,8 +1110,14 @@ function renderUnlocks() {
   }).join("");
 }
 
+// Cash as shown: while cash drains into a tile it counts down on screen
+// before the real purchase happens at the end of the fill.
+function displayedCash() {
+  return carryActive() ? state.cash - Carry.pendingSpend() : state.cash;
+}
+
 function render() {
-  el.cash.textContent = formatMoney(state.cash);
+  el.cash.textContent = formatMoney(displayedCash());
   el.reputation.textContent = formatNumber(state.reputation);
   el.brand.textContent = state.brandName;
   el.viewResult.hidden = !state.milestoneReached;
@@ -1101,6 +1182,130 @@ function initAnalytics() {
   document.head.appendChild(script);
 }
 
+// ---------- Play clock: time to first sale, first unlock, session length ----------
+
+// Seconds of play (page visible, brand named) since this save started. It is
+// kept in the event log, not the game save, so the save stays unchanged. Old
+// saves that had already sold something do not start a clock.
+let playClock = { running: false, seconds: 0, unsaved: 0 };
+const session = { visibleMs: 0, visibleSince: Date.now(), ended: false, hiddenAt: 0 };
+
+function writeEventLog(log) {
+  try {
+    localStorage.setItem(CONFIG.tracking.storageKey, JSON.stringify(log));
+  } catch (e) {
+    // Tracking must never break the game.
+  }
+}
+
+function startPlayClock() {
+  const values = readEventLog().values || {};
+  if (values.playSec !== undefined) {
+    playClock = { running: true, seconds: values.playSec, unsaved: 0 };
+  } else if (state.ordersShipped === 0 && !state.stats.upgradesBought) {
+    playClock = { running: true, seconds: 0, unsaved: 1 };   // a fresh save: save the clock soon
+  }
+}
+
+function addPlayTime(dt) {
+  if (!playClock.running) return;
+  playClock.seconds += dt;
+  playClock.unsaved += dt;
+}
+
+function flushPlayClock() {
+  if (!playClock.running || playClock.unsaved === 0) return;
+  const log = readEventLog();
+  log.values = log.values || {};
+  log.values.playSec = Math.round(playClock.seconds * 10) / 10;
+  writeEventLog(log);
+  playClock.unsaved = 0;
+}
+
+function resetPlayClock() {
+  const log = readEventLog();
+  log.values = log.values || {};
+  delete log.values.playSec;
+  delete log.values.firstUnlockDone;
+  writeEventLog(log);
+  playClock = { running: true, seconds: 0, unsaved: 1 };
+}
+
+function bucketLabel(seconds, edges) {
+  const fmt = (s) => (s % 60 === 0 && s >= 60 ? `${s / 60}m` : `${s}s`);
+  if (seconds < edges[0]) return `under-${fmt(edges[0])}`;
+  for (let i = 1; i < edges.length; i++) {
+    if (seconds < edges[i]) return `${fmt(edges[i - 1])}-${fmt(edges[i])}`;
+  }
+  return `over-${fmt(edges[edges.length - 1])}`;
+}
+
+// Track how many seconds of play it took to get here (once per save).
+function trackFirstTime(name, edges) {
+  if (!playClock.running) return;
+  const seconds = Math.round(playClock.seconds);
+  track(name, bucketLabel(seconds, edges));
+  const log = readEventLog();
+  log.values = log.values || {};
+  log.values[`${name}Sec`] = seconds;
+  log.values.playSec = Math.round(playClock.seconds * 10) / 10;
+  writeEventLog(log);
+  playClock.unsaved = 0;
+}
+
+function trackFirstUnlock() {
+  const values = readEventLog().values || {};
+  if (values.firstUnlockDone || !playClock.running) return;
+  trackFirstTime("timeToFirstUnlock", CONFIG.tracking.firstUnlockBucketsSec);
+  const log = readEventLog();
+  log.values.firstUnlockDone = true;
+  writeEventLog(log);
+}
+
+// A session is the time the page is visible. Hiding the page ends it; coming
+// back within newSessionAfterSec carries on the same session.
+function endSession() {
+  if (session.ended) return;
+  session.ended = true;
+  session.hiddenAt = Date.now();
+  session.visibleMs += Date.now() - session.visibleSince;
+  const seconds = Math.round(session.visibleMs / 1000);
+  session.lastLabel = `sessionLength:${bucketLabel(seconds, CONFIG.tracking.sessionBucketsSec)}`;
+  track("sessionLength", bucketLabel(seconds, CONFIG.tracking.sessionBucketsSec));
+  const log = readEventLog();
+  log.values = log.values || {};
+  log.values.lastSessionSec = seconds;
+  writeEventLog(log);
+}
+
+function resumeSession() {
+  if (!session.ended) return;
+  const awaySec = (Date.now() - session.hiddenAt) / 1000;
+  session.ended = false;
+  session.visibleSince = Date.now();
+  if (awaySec >= CONFIG.tracking.newSessionAfterSec) {
+    session.visibleMs = 0;   // a new visit
+    return;
+  }
+  // A short look away: the same session goes on, so take back its early
+  // count (it is counted again, with the longer time, when it really ends).
+  const log = readEventLog();
+  if (log.counts[session.lastLabel] > 0) log.counts[session.lastLabel] -= 1;
+  writeEventLog(log);
+}
+
+// Every button gives a little pop and a click sound when pressed.
+function wireButtonFeedback() {
+  document.addEventListener("pointerdown", (e) => {
+    const button = e.target.closest && e.target.closest("button");
+    if (!button || button.disabled) return;
+    playSound("click");
+    button.classList.remove("pop");
+    void button.offsetWidth;   // restart the animation
+    button.classList.add("pop");
+  });
+}
+
 // ---------- Lesson cards ----------
 
 // Each lesson in lessons.js names a trigger. These are the checks for them.
@@ -1114,6 +1319,7 @@ const LESSON_TRIGGERS = {
 };
 
 let currentLesson = null;
+let lastLessonClosedAt = 0;   // performance.now() when the last card was closed
 
 // "mission:<id>" triggers fire once that mission has started (or is past).
 function lessonTriggerMet(trigger) {
@@ -1128,6 +1334,8 @@ function lessonTriggerMet(trigger) {
 // Show the next unseen lesson whose trigger is true, one at a time.
 function checkLessons() {
   if (currentLesson || !state.brandName) return;
+  if (state.ordersShipped < 1) return;   // no reading before the first sale
+  if (lastLessonClosedAt && performance.now() - lastLessonClosedAt < CONFIG.lessonGapSeconds * 1000) return;
   const next = LESSONS.find(
     (lesson) => !state.lessonsSeen.includes(lesson.id) && lessonTriggerMet(lesson.trigger)
   );
@@ -1148,6 +1356,7 @@ function showLesson(lesson) {
 }
 
 function hideLesson() {
+  if (currentLesson) lastLessonClosedAt = performance.now();
   currentLesson = null;
   el.lesson.hidden = true;
   document.body.classList.remove("lesson-open");
@@ -1169,6 +1378,9 @@ function submitBrandName(event) {
   }
   state.brandName = name;
   el.brandError.textContent = "";
+  if (state.ordersShipped === 0 && state.nextOrderId === 1) {
+    state.nextOrderIn = Math.min(state.nextOrderIn, CONFIG.carry.firstOrder.delaySec);
+  }
   lastTick = Date.now();
   saveGame();
   ensureBrandName();
@@ -1336,6 +1548,10 @@ function tick() {
     applyAway(dt * 1000);   // computer slept or tab was frozen: treat as time away
   } else {
     advanceGame(dt);
+    if (!document.hidden) addPlayTime(dt);
+    // With the page hidden there are no animation frames, so the carry
+    // loop's staff keep working from here.
+    if (document.hidden && carryActive()) Carry.update(dt);
   }
   checkZones();
   checkMissions();
@@ -1384,10 +1600,12 @@ function start() {
     applyAway(Date.now() - saved.lastSeen);
   }
   checkUnlocks();   // catches up if config thresholds changed
-  checkZones();
+  // Zones are checked on the first tick, once the 3D view (and with it the
+  // carry loop, where zones open by tile) has had a chance to start.
   lastTick = Date.now();
   initAnalytics();
   track("gameStarted");
+  startPlayClock();
   buildUpgradeRows();
   buildRebrandPanel();
   el.rebrandName.maxLength = CONFIG.brand.maxLength;
@@ -1396,11 +1614,19 @@ function start() {
   saveGame();
 
   setInterval(tick, CONFIG.tickMs);
-  setInterval(saveGame, CONFIG.autosaveMs);
+  setInterval(() => { saveGame(); flushPlayClock(); }, CONFIG.autosaveMs);
   window.addEventListener("beforeunload", saveGame);
+  window.addEventListener("pagehide", () => { flushPlayClock(); endSession(); });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) saveGame();
+    if (document.hidden) {
+      saveGame();
+      flushPlayClock();
+      endSession();
+    } else {
+      resumeSession();
+    }
   });
+  wireButtonFeedback();
   if (new URLSearchParams(location.search).has("debug")) renderDebugPanel();
   el.welcomeClose.addEventListener("click", hideWelcomeBack);
   el.unlockClose.addEventListener("click", hideUnlockBanner);
