@@ -71,6 +71,22 @@
     .level-head .muted { font-size: 0.8rem; }
     .level-panel .bar { margin-top: 6px; }
     .xp-fill { background: #c9a23c; transition: width 0.3s; }
+    .brand-value { margin-top: 8px; font-size: 0.85rem; color: #c9a23c; }
+    .brand-value[hidden] { display: none; }
+    #rebrand p { margin: 0 0 10px; font-size: 0.9rem; line-height: 1.4; }
+    .rebrand-cols { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; }
+    .rebrand-cols > div { flex: 1 1 180px; background: #1b1d23; border-radius: 10px; padding: 10px 12px; }
+    .rebrand-cols ul { margin: 6px 0 0; padding-left: 18px; }
+    .rebrand-cols li { margin: 2px 0; }
+    #rebrand-resets strong { color: #ff8a80; }
+    #rebrand-keeps strong { color: #7fd48a; }
+    #rebrand-status { margin-top: 12px !important; font-weight: 600; }
+    #rebrand-form[hidden] { display: none; }
+    #rebrand-form label { display: block; font-size: 0.85rem; color: #9aa0ad; margin-bottom: 6px; }
+    #rebrand-form input {
+      width: 100%; font: inherit; color: inherit; background: #15161a; margin-bottom: 10px;
+      border: 1px solid #3a3d48; border-radius: 8px; padding: 12px; min-height: 44px;
+    }
     .mission { margin-top: 12px; border: 1px solid #3f5fa8; }
     .mission .label { color: #8fb0ff; }
     .mission strong { display: block; margin-top: 4px; font-size: 1.05rem; }
@@ -173,6 +189,7 @@
         <span class="muted" id="xp-text"></span>
       </div>
       <div class="bar"><div class="bar-fill xp-fill" id="xp-fill"></div></div>
+      <div class="brand-value" id="brand-value" hidden></div>
     </div>
 
     <section class="panel mission" id="mission">
@@ -197,6 +214,21 @@
 
     <h2>Unlocks</h2>
     <div class="panel" id="unlocks"></div>
+
+    <h2 id="rebrand-title"></h2>
+    <section class="panel" id="rebrand">
+      <p id="rebrand-intro"></p>
+      <div class="rebrand-cols">
+        <div id="rebrand-resets"></div>
+        <div id="rebrand-keeps"></div>
+      </div>
+      <p id="rebrand-status"></p>
+      <div id="rebrand-form" hidden>
+        <label id="rebrand-label" for="rebrand-name"></label>
+        <input id="rebrand-name" type="text" autocomplete="off">
+        <button id="rebrand-button" class="primary"></button>
+      </div>
+    </section>
 
     <section id="debug" class="panel" hidden></section>
 

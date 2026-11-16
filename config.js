@@ -311,6 +311,47 @@ const CONFIG = {
   },
 
   // ---------------------------------------------------------------------
+  // REBRAND (prestige). Opens once this brand has made `minRunSales` in
+  // sales since the last rebrand. Rebranding gives Brand Value points:
+  //   points = floor((sales this brand / pointDivisor) ^ pointExponent)
+  // e.g. $15,000 -> 3 points, $40,000 -> 6 points, $100,000 -> 10 points.
+  // Each point makes every order pay `payBonusPerPoint` more, for good.
+  // ---------------------------------------------------------------------
+  rebrand: {
+    minRunSales: 15000,
+    pointDivisor: 1000,
+    pointExponent: 0.5,
+    payBonusPerPoint: 0.05,
+    title: "Rebrand",
+    intro: "Rebranding starts your shop again under a new name. You lose your cash and machines, " +
+      "but the name you built is worth something: you keep Brand Value points that make every order pay more, for good.",
+    resetsTitle: "What resets",
+    resets: [
+      "Cash (back to {startingCash})",
+      "All upgrades",
+      "Open orders",
+      "Sales counted toward the next rebrand",
+    ],
+    keepsTitle: "What stays",
+    keeps: [
+      "Level and XP",
+      "Lessons you have seen",
+      "Missions",
+      "Unlocks: DTG, embroidery, Kpda Karkhana",
+      "Shop zones you have opened",
+      "Reputation",
+      "Brand Value points ({bonusPerPoint} more order pay each)",
+    ],
+    locked: "Rebrand opens once this brand has made {target} in sales ({current} so far).",
+    ready: "Rebrand now to gain {points} Brand Value points. Orders will then pay {totalBonus} more.",
+    nameLabel: "New brand name (leave empty to keep \"{name}\")",
+    button: "Rebrand now",
+    confirm: "Rebrand as \"{name}\"?\n\nCash, upgrades and open orders reset. You gain {points} Brand Value points.",
+    done: "Rebranded as {name}: +{points} Brand Value points. Orders now pay {totalBonus} more.",
+    brandValueLine: "Brand Value {points}: orders pay {totalBonus} more",
+  },
+
+  // ---------------------------------------------------------------------
   // MISSIONS. Text and order are in missions.js. Here: the target
   // (`amount`, used by gain and reach goals) and the reward for each one.
   // Rewards grow as the missions get harder.

@@ -31,6 +31,9 @@ function newState() {
     xp: 0,             // lifetime experience points
     level: 1,          // kept in step with xp by gainXp()
     zonesUnlocked: [], // padlocked shop zones the player has opened
+    brandValue: 0,     // permanent prestige points from rebranding
+    runSales: 0,       // sales since the last rebrand
+    rebrands: 0,
     orders: [],
     nextOrderId: 1,
     nextOrderIn: CONFIG.orders.firstOrderDelaySec,
@@ -230,12 +233,14 @@ function calcOrderEconomics(quantity, typeId = "screen", withUpgrades = true) {
   }
 
   const totalCost = sumCosts(costs, Object.keys(costs));
-  const revenue = type.pricePerTee * quantity * (withUpgrades ? payMultiplier(type.id) : 1);
+  const brandBonus = withUpgrades ? brandValueBonus() : 0;
+  const payFactor = withUpgrades ? payMultiplier(type.id) * (1 + brandBonus) : 1;
+  const revenue = type.pricePerTee * quantity * payFactor;
   return {
     quantity, typeId: type.id, costs, totalCost, revenue,
     profit: revenue - totalCost,
     margin: (revenue - totalCost) / revenue,
-    discountRate, surchargeRate, belowMoq,
+    discountRate, surchargeRate, belowMoq, brandBonus,
   };
 }
 
@@ -311,6 +316,7 @@ function createOrder(pick = pickTypeAndQuantity()) {
       discountRate: econ.discountRate,
       surchargeRate: econ.surchargeRate,
       belowMoq: econ.belowMoq,
+      brandBonus: econ.brandBonus,
     },
     deadline,
     deadlineTotal: deadline,
@@ -368,6 +374,7 @@ function finishStep(order) {
 function shipOrder(order) {
   state.cash += order.value;
   state.totalSales += order.value;
+  state.runSales += order.value;
   state.ordersShipped += 1;
   state.reputation = Math.min(
     CONFIG.reputation.max,
@@ -577,6 +584,71 @@ function gainXp(amount) {
   }
 }
 
+// ---------- Rebrand (prestige) ----------
+
+// Extra share every order pays from Brand Value (0.15 = 15% more).
+function brandValueBonus(points = state.brandValue) {
+  return points * CONFIG.rebrand.payBonusPerPoint;
+}
+
+function canRebrand() {
+  return state.runSales >= CONFIG.rebrand.minRunSales;
+}
+
+function rebrandPoints() {
+  const r = CONFIG.rebrand;
+  return Math.floor(Math.pow(state.runSales / r.pointDivisor, r.pointExponent));
+}
+
+function rebrand() {
+  if (!canRebrand()) return;
+  const r = CONFIG.rebrand;
+  const points = rebrandPoints();
+  const name = el.rebrandName.value.trim().slice(0, CONFIG.brand.maxLength) || state.brandName;
+  if (!confirm(fillText(r.confirm, { name, points }))) return;
+
+  // What resets
+  state.cash = CONFIG.startingCash;
+  state.upgrades = {};
+  state.orders = [];
+  state.runSales = 0;
+  state.nextOrderIn = CONFIG.orders.firstOrderDelaySec;
+  // What changes for good
+  state.brandName = name;
+  state.brandValue += points;
+  state.rebrands += 1;
+
+  el.rebrandName.value = "";
+  showNotice(fillText(r.done, { name, points, totalBonus: formatPercent(brandValueBonus()) }), "good");
+  saveGame();
+  render();
+}
+
+function buildRebrandPanel() {
+  const r = CONFIG.rebrand;
+  const values = { startingCash: formatMoney(CONFIG.startingCash), bonusPerPoint: formatPercent(r.payBonusPerPoint) };
+  const list = (items) => items.map((t) => `<li>${fillText(t, values)}</li>`).join("");
+  document.getElementById("rebrand-title").textContent = r.title;
+  document.getElementById("rebrand-intro").textContent = r.intro;
+  document.getElementById("rebrand-resets").innerHTML = `<strong>${r.resetsTitle}</strong><ul>${list(r.resets)}</ul>`;
+  document.getElementById("rebrand-keeps").innerHTML = `<strong>${r.keepsTitle}</strong><ul>${list(r.keeps)}</ul>`;
+  el.rebrandButton.textContent = r.button;
+}
+
+function renderRebrand() {
+  const r = CONFIG.rebrand;
+  const ready = canRebrand();
+  el.rebrandStatus.textContent = ready
+    ? fillText(r.ready, { points: rebrandPoints(), totalBonus: formatPercent(brandValueBonus(state.brandValue + rebrandPoints())) })
+    : fillText(r.locked, { target: formatMoney(r.minRunSales), current: formatMoney(state.runSales) });
+  el.rebrandForm.hidden = !ready;
+  el.rebrandLabel.textContent = fillText(r.nameLabel, { name: state.brandName });
+  el.brandValue.hidden = state.brandValue === 0;
+  el.brandValue.textContent = fillText(r.brandValueLine, {
+    points: state.brandValue, totalBonus: formatPercent(brandValueBonus()),
+  });
+}
+
 // ---------- Save migration ----------
 
 // Older saves are upgraded in place, never wiped. Each step moves a save
@@ -595,6 +667,7 @@ function migrateToV2(s) {
   // Credit past orders with base XP so a long-time player does not restart at level 1.
   s.xp = (s.ordersShipped || 0) * CONFIG.level.xpPerOrder;
   s.level = levelInfo(s.xp).level;
+  s.runSales = s.totalSales || 0;   // no rebrand yet, so all sales count
   s.missionIndex = 0;
   s.missionBaseline = 0;
   const previous = state;
@@ -683,6 +756,12 @@ const el = {
   resultDownload: document.getElementById("result-download"),
   resultClose: document.getElementById("result-close"),
   viewResult: document.getElementById("view-result"),
+  brandValue: document.getElementById("brand-value"),
+  rebrandStatus: document.getElementById("rebrand-status"),
+  rebrandForm: document.getElementById("rebrand-form"),
+  rebrandLabel: document.getElementById("rebrand-label"),
+  rebrandName: document.getElementById("rebrand-name"),
+  rebrandButton: document.getElementById("rebrand-button"),
   level: document.getElementById("level"),
   xpText: document.getElementById("xp-text"),
   xpFill: document.getElementById("xp-fill"),
@@ -818,6 +897,9 @@ function pricingNotes(order) {
       text: `Below the ${type.moq.quantity}-tee minimum order: the supplier adds a ` +
         `${formatPercent(pricing.surchargeRate)} surcharge to blank tees (already in the cost above).`,
     });
+  }
+  if (pricing.brandBonus > 0) {
+    notes.push({ kind: "good", text: `Brand Value bonus: this order pays ${formatPercent(pricing.brandBonus)} more.` });
   }
   const discountedParts = CONFIG.bulkDiscount.appliesTo.map(partLabel).join(" and ").toLowerCase();
   if (pricing.discountRate > 0) {
@@ -955,6 +1037,7 @@ function render() {
   renderOrders();
   renderUpgrades();
   renderUnlocks();
+  renderRebrand();
 }
 
 // ---------- Tracking ----------
@@ -1289,6 +1372,8 @@ function start() {
   initAnalytics();
   track("gameStarted");
   buildUpgradeRows();
+  buildRebrandPanel();
+  el.rebrandName.maxLength = CONFIG.brand.maxLength;
   ensureBrandName();
   render();
   saveGame();
@@ -1304,6 +1389,7 @@ function start() {
   el.unlockClose.addEventListener("click", hideUnlockBanner);
   el.reset.addEventListener("click", resetGame);
   el.brandForm.addEventListener("submit", submitBrandName);
+  el.rebrandButton.addEventListener("click", rebrand);
   el.lessonClose.addEventListener("click", hideLesson);
   el.resultClose.addEventListener("click", hideResultCard);
   el.resultDownload.addEventListener("click", downloadResultCard);
