@@ -61,7 +61,7 @@ Old saves must keep loading: migrate, never wipe.
 - [x] Day 4: upgrades and unlocks
 - [x] Day 5: lesson cards
 - [x] Day 6: mobile layout and result card
-- [ ] Day 7: playtest, deploy, tracking (playtest and tracking done; still to do: push to GitHub, enable Pages, confirm the live URL loads)
+- [x] Day 7: playtest, deploy, tracking (live at https://pranavahuja0612-spec.github.io/clothing-brand-mafia/)
 
 ### Week 2
 - [x] Part 1: missions (15, in missions.js; targets and rewards in config.js)
@@ -72,4 +72,4 @@ Old saves must keep loading: migrate, never wipe.
 - [x] Part 6: track mission completed, zone unlocked, rebrand
 - [x] Save migration from version 1 (Week 1) to 2, tested with a real Day 7 save
 - [x] Playtest: fresh save through all 15 missions and a rebrand; 360px and desktop layout
-- [ ] Deploy: push to GitHub and confirm the live URL loads
+- [x] Deploy: pushed to GitHub, live URL checked 2026-11-16
