@@ -497,6 +497,7 @@ function checkZones() {
   for (const zone of CONFIG.zones) {
     if (!zone.requires || state.zonesUnlocked.includes(zone.id) || !zoneRequirementMet(zone)) continue;
     state.zonesUnlocked.push(zone.id);
+    track("zoneUnlocked", zone.id);
     const opens = CONFIG.upgrades.filter((u) => u.zone === zone.id).map((u) => u.name).join(", ");
     unlockMessages.push(`Zone unlocked: ${zone.name}. New upgrades: ${opens}.`);
     showUnlockBanner();
@@ -532,6 +533,7 @@ function completeMission(mission) {
   state.cash += reward.cash || 0;
   gainXp(reward.xp || 0);
   addStat("missionsCompleted");
+  track("missionCompleted", mission.id);
   showNotice(fillText(MISSION_TEXT.completed, {
     title: missionTitle(mission), cash: formatMoney(reward.cash || 0), xp: reward.xp || 0,
   }), "good");
@@ -617,6 +619,7 @@ function rebrand() {
   state.brandName = name;
   state.brandValue += points;
   state.rebrands += 1;
+  track("rebrand");
 
   el.rebrandName.value = "";
   showNotice(fillText(r.done, { name, points, totalBonus: formatPercent(brandValueBonus()) }), "good");

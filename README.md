@@ -44,7 +44,8 @@ text. The triggers (what makes a card appear) are checked in `game.js`, in
 ## Tracking
 
 Events are counted in localStorage (game started, first order shipped, lesson
-card opened, result card downloaded, B2B link clicked). That only shows you your
+card opened, result card downloaded, B2B link clicked, mission completed, zone
+unlocked, rebrand). That only shows you your
 own browser. To see all players, create a free site at
 [goatcounter.com](https://www.goatcounter.com) and put its code in
 `tracking.goatcounterCode` in `config.js`. It is free for reasonable public use
