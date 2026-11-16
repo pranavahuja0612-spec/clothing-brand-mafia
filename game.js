@@ -1013,7 +1013,12 @@ function renderUpgrades() {
       ? "Fully upgraded"
       : `Next level: ${describeEffect(u, level + 1)}`;
     const button = row.querySelector(".upgrade-buy");
-    button.textContent = maxed ? "Maxed" : `Upgrade · ${formatMoney(cost)}`;
+    // Warn (but allow) when buying would leave too little to finish open orders.
+    const leavesShort = !maxed && state.cash >= cost && state.cash - cost < committedCosts();
+    button.textContent = maxed
+      ? "Maxed"
+      : `Upgrade · ${formatMoney(cost)}${leavesShort ? " · leaves open orders short" : ""}`;
+    button.classList.toggle("warn", leavesShort);
     button.disabled = maxed || state.cash < cost;
   }
 }

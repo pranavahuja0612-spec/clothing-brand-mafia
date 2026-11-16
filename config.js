@@ -112,7 +112,10 @@ const CONFIG = {
     // offered only if its total cost is at most (cash not already needed
     // by open orders) x this number. Bigger orders therefore appear as the
     // shop grows, and you are never offered more work than you can pay for.
-    offerCostLimitMultiple: 1.5,
+    // Week 2 playtest: at 1.5 a player who starts every order runs out of
+    // cash mid-order and spirals (23 failed orders in 90 minutes); at 1.0
+    // the same player finished all 15 missions in 29 minutes with none.
+    offerCostLimitMultiple: 1.0,
     pricePerTee: 12,         // what the customer pays per tee (see above)
     // Deadline = base + perTee * quantity. For 50 tees the steps take
     // about 47s, so the deadline of 120s leaves room to juggle orders.
@@ -218,7 +221,7 @@ const CONFIG = {
       description: "A proper room for folding, bagging and labelling." },
     { id: "embroideryCorner", name: "Embroidery Corner", requires: { level: 5 },
       description: "Space for embroidery machines." },
-    { id: "bulkDesk", name: "Kpda Karkhana Bulk Desk", requires: { level: 6 },
+    { id: "bulkDesk", name: "Kpda Karkhana Bulk Desk", requires: { level: 8 },
       description: "A desk for bulk clients like Kpda Karkhana, our partner." },
   ],
 
