@@ -116,7 +116,7 @@
     #lesson-card .lesson-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     #lesson-card .lesson-actions button { white-space: nowrap; flex-shrink: 0; }
     #lesson-card { max-height: 50vh; overflow-y: auto; }
-    body.lesson-open main { padding-bottom: 50vh; }
+    body.lesson-open:not(.view-3d) main { padding-bottom: 50vh; }
     .footer { text-align: center; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
     .footer button { font-size: 0.85rem; color: #9aa0ad; background: none; }
     .footer #view-result { color: #fff; background: #2f6fed; }
@@ -155,11 +155,121 @@
       .panel { padding: 12px; }
       #lesson-card { left: 8px; right: 8px; bottom: 8px; }
     }
+
+    /* Header row and settings button (both views) */
+    .hud-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .hud-top h1 { margin: 0; }
+    .icon-button { min-width: 44px; min-height: 44px; padding: 0; font-size: 1.3rem; border-radius: 12px; }
+    #settings-overlay .dialog-actions button.selected { background: #2f6fed; }
+    #settings-overlay .dialog > p { margin: 10px 0; }
+    #sheet-tabs { display: none; }
+
+    /* ---------- 3D view: the page becomes an overlay on the scene ---------- */
+    #scene-root { position: fixed; inset: 0; z-index: 0; background: #1d2230; }
+    #scene-root[hidden] { display: none; }
+    #scene-root canvas { display: block; touch-action: none; cursor: grab; }
+    #scene-root canvas:active { cursor: grabbing; }
+
+    body.view-3d { overflow: hidden; }
+    body.view-3d main {
+      position: fixed; inset: 0; z-index: 1; max-width: none; padding: 0;
+      pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    body.view-3d #hud, body.view-3d #sheet { pointer-events: auto; width: 100%; max-width: 520px; margin: 0 auto; }
+    body.view-3d #hud { padding: 8px 10px 0; max-height: 46vh; overflow-y: auto; }
+    body.view-3d .hud-top { margin-bottom: 2px; }
+    body.view-3d .hud-top h1 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #ffd166; text-shadow: 0 2px 0 #000; }
+    body.view-3d .brand-line { margin: 0 0 6px; color: #fff; font-weight: 900; font-size: 1.2rem; text-shadow: 0 2px 0 #000; }
+    body.view-3d .stats { gap: 8px; }
+    body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission,
+    body.view-3d #welcome-back, body.view-3d #unlock-banner {
+      border-radius: 16px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
+    }
+    body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission {
+      background: rgba(20, 22, 30, 0.86); border: 2px solid rgba(255, 255, 255, 0.08); padding: 6px 12px;
+    }
+    body.view-3d .label { font-weight: 800; font-size: 0.7rem; }
+    body.view-3d .big { font-size: 1.3rem; font-weight: 900; margin-top: 0; }
+    body.view-3d .level-panel { margin-top: 6px; }
+    body.view-3d .level-head strong { font-weight: 900; }
+    body.view-3d .mission { margin-top: 6px; }
+    body.view-3d .mission strong { font-weight: 900; font-size: 0.95rem; }
+    body.view-3d #mission-desc { display: none; }
+    body.view-3d .bar { height: 8px; border-radius: 4px; }
+    body.view-3d #notice { margin: 4px 2px 0; min-height: 0; font-weight: 800; text-shadow: 0 1px 0 #000; }
+    body.view-3d #welcome-back, body.view-3d #unlock-banner { padding: 10px 12px; margin-bottom: 6px; }
+    body.view-3d #welcome-back p, body.view-3d #unlock-banner p { margin: 4px 0; font-size: 0.85rem; }
+
+    body.view-3d #sheet {
+      background: rgba(20, 22, 30, 0.95); border-radius: 18px 18px 0 0;
+      box-shadow: 0 -4px 0 rgba(0, 0, 0, 0.35); max-height: 42vh; display: flex; flex-direction: column;
+    }
+    body.view-3d #sheet-tabs { display: flex; gap: 6px; padding: 8px; flex: 0 0 auto; }
+    body.view-3d #sheet-tabs button { flex: 1; background: #2c2f38; }
+    body.view-3d #sheet-tabs #sheet-toggle { flex: 0 0 48px; }
+    body.view-3d #sheet.collapsed #sheet-toggle { transform: rotate(180deg); }
+    #sheet[data-tab="orders"] #sheet-tabs [data-tab="orders"],
+    #sheet[data-tab="shop"] #sheet-tabs [data-tab="shop"],
+    #sheet[data-tab="more"] #sheet-tabs [data-tab="more"] { background: #2f6fed; box-shadow: 0 4px 0 #1c47a8; }
+    body.view-3d .sheet-group { display: none; overflow-y: auto; padding: 0 10px 12px; flex: 1 1 auto; min-height: 0; }
+    body.view-3d #sheet[data-tab="orders"] .sheet-group[data-group="orders"],
+    body.view-3d #sheet[data-tab="shop"] .sheet-group[data-group="shop"],
+    body.view-3d #sheet[data-tab="more"] .sheet-group[data-group="more"] { display: block; }
+    body.view-3d #sheet.collapsed .sheet-group { display: none !important; }
+    /* Phones: a compact HUD so the shop gets the middle of the screen */
+    @media (max-width: 600px) {
+      body.view-3d #hud { padding: 6px 8px 0; position: relative; }
+      body.view-3d .hud-top { position: absolute; top: 6px; right: 8px; margin: 0; }
+      body.view-3d .hud-top h1 { display: none; }
+      body.view-3d .brand-line { padding-right: 56px; margin: 4px 0 6px; font-size: 1.05rem; min-height: 32px; }
+      body.view-3d .stats { gap: 6px; }
+      body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission { padding: 4px 10px; border-radius: 12px; }
+      body.view-3d .label { font-size: 0.6rem; }
+      body.view-3d .big { font-size: 1.05rem; }
+      body.view-3d .level-panel { margin-top: 5px; }
+      body.view-3d .level-head strong { font-size: 1rem; }
+      body.view-3d .level-head .muted { font-size: 0.68rem; }
+      body.view-3d .level-panel .bar { margin-top: 3px; height: 6px; }
+      body.view-3d .brand-value { margin-top: 2px; font-size: 0.72rem; }
+      body.view-3d .mission { margin-top: 5px; }
+      body.view-3d .mission strong { font-size: 0.85rem; margin-top: 1px; }
+      body.view-3d .mission .bar { height: 6px; margin-top: 4px; }
+      body.view-3d .mission-foot { font-size: 0.72rem; margin-top: 3px; }
+      body.view-3d #notice { font-size: 0.78rem; }
+      body.view-3d #sheet { max-height: 36vh; }
+      body.view-3d #sheet-tabs { padding: 6px; }
+    }
+    /* Wide screens: HUD in a left column, panel in a right column, shop in the middle */
+    @media (min-width: 900px) {
+      body.view-3d main { flex-direction: row; align-items: flex-start; }
+      body.view-3d #hud { width: 340px; margin: 0; max-height: 100vh; padding: 12px; }
+      body.view-3d #sheet { width: 400px; margin: 12px; max-height: calc(100vh - 24px); border-radius: 18px; }
+    }
+    body.view-3d .sheet-group h2 { margin: 2px 0 8px; font-weight: 900; }
+
+    /* Chunky mobile-game buttons */
+    body.view-3d button {
+      font-weight: 800; border-radius: 14px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
+      transition: transform 0.05s;
+    }
+    body.view-3d button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45); }
+    body.view-3d .order-action, body.view-3d .upgrade-buy, body.view-3d .primary { font-size: 1.05rem; box-shadow: 0 4px 0 #1c47a8; }
+    body.view-3d .order-action:disabled, body.view-3d .upgrade-buy:disabled { box-shadow: 0 4px 0 #22242b; }
+    body.view-3d .upgrade-buy.warn { box-shadow: 0 4px 0 #4d3810; }
+    body.view-3d .icon-button { background: rgba(20, 22, 30, 0.86); }
+    body.view-3d .footer button { box-shadow: none; }
+    body.view-3d #lesson-card { z-index: 15; }
   </style>
 </head>
 <body>
+  <div id="scene-root" hidden></div>
+
   <main>
-    <h1>Clothing Brand Mafia</h1>
+   <div id="hud">
+    <div class="hud-top">
+      <h1>Clothing Brand Mafia</h1>
+      <button id="settings-open" class="icon-button" aria-label="Settings">&#9881;</button>
+    </div>
     <p class="muted brand-line" id="brand-name"></p>
 
     <div id="welcome-back" hidden>
@@ -205,14 +315,28 @@
     </section>
 
     <p id="notice"></p>
+   </div>
 
+   <div id="sheet" data-tab="orders">
+    <nav id="sheet-tabs">
+      <button data-tab="orders">Orders</button>
+      <button data-tab="shop">Shop</button>
+      <button data-tab="more">More</button>
+      <button id="sheet-toggle" aria-label="Hide or show the panel">&#9662;</button>
+    </nav>
+
+    <section class="sheet-group" data-group="orders">
     <h2>Orders</h2>
     <p class="muted" id="no-orders">Waiting for the next order&hellip;</p>
     <div id="orders"></div>
+    </section>
 
+    <section class="sheet-group" data-group="shop">
     <h2>Shop zones and upgrades</h2>
     <div id="upgrades"></div>
+    </section>
 
+    <section class="sheet-group" data-group="more">
     <h2>Unlocks</h2>
     <div class="panel" id="unlocks"></div>
 
@@ -237,7 +361,22 @@
       <button id="view-result" hidden></button>
       <button id="reset">Reset progress</button>
     </div>
+    </section>
+   </div>
   </main>
+
+  <div class="overlay" id="settings-overlay" hidden>
+    <div class="dialog">
+      <h2 id="settings-title"></h2>
+      <p class="muted" id="settings-view-label"></p>
+      <div class="dialog-actions">
+        <button id="settings-3d"></button>
+        <button id="settings-2d"></button>
+      </div>
+      <p class="muted" id="settings-note"></p>
+      <button id="settings-close" class="primary"></button>
+    </div>
+  </div>
 
   <div class="overlay" id="brand-overlay" hidden>
     <form class="dialog" id="brand-form">
@@ -274,5 +413,7 @@
   <script src="lessons.js"></script>
   <script src="missions.js"></script>
   <script src="game.js"></script>
+  <script src="vendor/three.min.js"></script>
+  <script src="scene3d.js"></script>
 </body>
 </html>

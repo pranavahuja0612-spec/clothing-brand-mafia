@@ -377,6 +377,76 @@ const CONFIG = {
     "first-bulk-deal":   { amount: 1,    cash: 500, xp: 200 },
   },
 
+  // ---------------------------------------------------------------------
+  // 3D VIEW (Week 3). Presentation only: nothing here changes the game.
+  // ---------------------------------------------------------------------
+  view3d: {
+    settingsKey: "clothingBrandMafia.settings.v1",   // separate from the game save
+    // Speed check: after `warmUpSeconds`, frames are counted for
+    // `checkSeconds`. Below `minFps` on average, the game switches itself
+    // to the 2D view (unless the player chose 3D in Settings).
+    minFps: 25,
+    warmUpSeconds: 1.5,
+    checkSeconds: 4,
+    maxPixelRatio: 1.5,      // sharper costs more on phones
+    // Camera: a fixed isometric angle. `viewSize` is how many world units
+    // fit the shorter side of the screen at zoom 1.
+    viewSize: 22,
+    zoom: { start: 1, min: 0.7, max: 2.5, wheelSpeed: 0.0015 },
+    panLimit: 12,            // how far the view can be dragged from the centre
+    // Shop layout: each zone is a square `zoneSize` wide, placed on a grid
+    // (column, row). The loading dock sits at `dockCell`.
+    zoneSize: 8,
+    zoneGap: 0.6,
+    layout: {
+      cutSew: [-1, 0],
+      printFloor: [0, 0],
+      embroideryCorner: [1, 0],
+      packing: [-1, 1],
+      bulkDesk: [1, 1],
+    },
+    dockCell: [0, 1],
+    workerSpeed: 4.5,        // world units per second
+    vanDriveSeconds: 1.6,    // out of the dock, and the same back in
+    unlockSeconds: 1.2,
+    teeStackLayers: 12,      // a full order's stack of folded tees
+    loadTimeBucketsSec: [1, 2, 4, 8],   // load time is tracked as "under 1s", "1-2s", ...
+    colors: {
+      background: "#1d2230",
+      ground: "#2a3142",
+      locked: "#4a4d57",
+      dock: "#5b6170",
+      road: "#3a3f4c",
+      zones: {
+        printFloor: "#3f6fd8",
+        cutSew: "#9b59b6",
+        packing: "#d08a3a",
+        embroideryCorner: "#2fa38a",
+        bulkDesk: "#c9a23c",
+      },
+      tees: { screen: "#f2f2f2", dtg: "#ff7a7a", embroidery: "#7fd48a", kpda: "#ffd166" },
+      shirt: ["#ff6b6b", "#4dabf7", "#ffd43b"],
+    },
+    text: {
+      settingsTitle: "Settings",
+      viewLabel: "Shop view",
+      view3d: "3D view",
+      view2d: "2D view",
+      close: "Done",
+      noteNoWebgl: "3D is not available on this device, so the game uses the 2D view.",
+      noteSlow: "The game switched to the 2D view because 3D ran slowly on this device. You can try 3D again.",
+      noteChosen3d: "3D view is on. Drag to move around the shop; pinch or scroll to zoom.",
+      noteChosen2d: "2D view is on.",
+      switchedSlow: "Switched to the 2D view to keep the game smooth. You can change this in Settings.",
+      lockedLabel: "Locked: {need}",
+      levelNeed: "level {n}",
+      cashNeed: "{cash} cash",
+      signTop: "Kpda Karkhana",
+      signBottom: "Bulk Desk",
+      dockLabel: "Loading dock",
+    },
+  },
+
   // Quantities shown in the debug table (open index.html?debug=1).
   debug: {
     quantities: [10, 50, 200],
