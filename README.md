@@ -29,6 +29,10 @@ reasoning. Change one number, save, and reload the page.
 - Upgrades: `upgrades`
 - Order types and unlock thresholds: `orderTypes`, `unlocks`
 - Result card milestone: `resultCard.milestone`
+- Mission targets and rewards: `missions` (mission text is in `missions.js`)
+- Level curve and XP per order: `level`
+- Shop zones and their thresholds: `zones` (each upgrade names its `zone`)
+- Rebrand milestone and Brand Value: `rebrand`
 - The B2B page link used by lesson cards and the result card: `b2bPageUrl`
 
 To check the economy, open `index.html?debug=1`. It shows revenue, cost and
@@ -37,9 +41,16 @@ counts logged in this browser.
 
 ## Lesson text
 
-All six lesson cards are in `lessons.js`: id, trigger, title, body and link
+All ten lesson cards are in `lessons.js`: id, trigger, title, body and link
 text. The triggers (what makes a card appear) are checked in `game.js`, in
-`LESSON_TRIGGERS`. Each card shows once and is remembered in the save.
+`LESSON_TRIGGERS`; a trigger of `mission:<id>` shows the card when that
+mission starts. Each card shows once and is remembered in the save.
+
+## Saves
+
+Progress is saved in localStorage with a version number. When a new version
+changes what is saved, `migrateSave` in `game.js` upgrades older saves instead
+of wiping them.
 
 ## Tracking
 
@@ -57,5 +68,6 @@ and uses no cookies. No ads, no paid services.
 - `game.js`: loop, state, save and load, UI
 - `config.js`: all numbers and settings
 - `lessons.js`: lesson cards
+- `missions.js`: mission text and order
 - `CREDITS.md`: licences for anything reused
 - `CLAUDE.md`: project brief and progress list

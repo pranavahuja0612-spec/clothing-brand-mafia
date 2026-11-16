@@ -23,6 +23,8 @@ A free, browser-based idle/tycoon game where the player runs a small clothing an
 - game.js: loop, state, save/load, UI
 - config.js: ALL numbers (prices, costs, upgrade levels, unlock thresholds). Balancing happens only here.
 - lessons.js: lesson cards (id, trigger, title, body, link to B2B page)
+- missions.js: mission text and order (targets and rewards are numbers, so they live in config.js under `missions`)
+- Saves carry a `version`. When the save shape changes, bump `saveVersion` in config.js and add a migration step in game.js (`migrateSave`). Never wipe old saves.
 - Keep the code readable. Short functions, clear names, comments only where they help.
 
 ## Economy rules
@@ -36,7 +38,16 @@ A free, browser-based idle/tycoon game where the player runs a small clothing an
 3. Three unlocks: DTG printing, embroidery, Kpda Karkhana bulk client.
 4. Six lesson cards: cost per tee, MOQ, GSM, print method, deadstock, returns.
 5. Mobile-friendly layout and a shareable result card.
-Out of scope for now: prestige, the open-world town, accounts, leaderboards, 3D, sound.
+Out of scope for now: the open-world town, accounts, leaderboards, 3D, sound. (Prestige was added in Week 2 as "Rebrand", at the owner's request.)
+
+## Week 2 scope
+1. Missions: one active at a time, banner with progress bar, pays cash and XP. 15 missions from first order to first Kpda Karkhana bulk deal, in missions.js.
+2. Player level: XP from missions and orders raises the level; level and XP bar on screen.
+3. Locked zones: Print Floor, Cut & Sew, Packing Room, Embroidery Corner, Kpda Karkhana Bulk Desk. Each opens at a level or cash threshold (config.js) and brings new upgrades.
+4. Rebrand (prestige): after a sales milestone, reset cash and upgrades but keep lessons, level and permanent Brand Value points that raise order pay. The game says clearly what resets and what stays.
+5. Four more lesson cards (pricing for profit, sampling before bulk, white-label vs own brand, cash flow), triggered by missions.
+6. Track: mission completed, zone unlocked, rebrand.
+Old saves must keep loading: migrate, never wipe.
 
 ## Working style
 - Ask before adding a feature outside the scope above.
@@ -51,3 +62,14 @@ Out of scope for now: prestige, the open-world town, accounts, leaderboards, 3D,
 - [x] Day 5: lesson cards
 - [x] Day 6: mobile layout and result card
 - [ ] Day 7: playtest, deploy, tracking (playtest and tracking done; still to do: push to GitHub, enable Pages, confirm the live URL loads)
+
+### Week 2
+- [x] Part 1: missions (15, in missions.js; targets and rewards in config.js)
+- [x] Part 2: player level and XP bar
+- [x] Part 3: locked shop zones with new upgrades
+- [x] Part 4: rebrand with Brand Value
+- [x] Part 5: four more lesson cards, triggered by missions
+- [x] Part 6: track mission completed, zone unlocked, rebrand
+- [x] Save migration from version 1 (Week 1) to 2, tested with a real Day 7 save
+- [x] Playtest: fresh save through all 15 missions and a rebrand; 360px and desktop layout
+- [ ] Deploy: push to GitHub and confirm the live URL loads
