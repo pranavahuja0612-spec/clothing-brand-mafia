@@ -165,19 +165,61 @@ const CONFIG = {
   // of its base. Different upgrades stack, so the total can go lower.
   //   stepTime: shortens a step (step: a step id, or "all")
   //   partCost: cuts one cost part (part: blank, ink, screen, labour, packaging)
-  // Time upgrades apply when a step starts. Cost upgrades apply when an
-  // order arrives, so an order already on screen keeps its price.
+  //   orderPay: raises what orders pay, by +perLevel per level (no cap)
+  // Add `orderType` to an effect to make it apply to that order type only.
+  // `zone` is the shop zone the upgrade sits in (see `zones` below); it can
+  // only be bought once that zone is open.
+  // Time upgrades apply when a step starts. Cost and pay upgrades apply when
+  // an order arrives, so an order already on screen keeps its price.
   // ---------------------------------------------------------------------
   upgradeMinMultiplier: 0.25,
   upgrades: [
-    { id: "press", name: "Press", maxLevel: 5, baseCost: 120, costGrowth: 1.7,
+    // Print Floor (open from the start)
+    { id: "press", name: "Press", zone: "printFloor", maxLevel: 5, baseCost: 120, costGrowth: 1.7,
       effect: { type: "stepTime", step: "print", perLevel: 0.12 } },
-    { id: "dryer", name: "Dryer", maxLevel: 5, baseCost: 100, costGrowth: 1.7,
+    { id: "dryer", name: "Dryer", zone: "printFloor", maxLevel: 5, baseCost: 100, costGrowth: 1.7,
       effect: { type: "stepTime", step: "pack", perLevel: 0.12 } },
-    { id: "flash", name: "Flash cure", maxLevel: 5, baseCost: 140, costGrowth: 1.8,
+    { id: "flash", name: "Flash cure", zone: "printFloor", maxLevel: 5, baseCost: 140, costGrowth: 1.8,
       effect: { type: "partCost", part: "ink", perLevel: 0.05 } },   // fewer misprints and wasted ink
-    { id: "staff", name: "Staff", maxLevel: 5, baseCost: 200, costGrowth: 1.8,
+    { id: "staff", name: "Staff", zone: "printFloor", maxLevel: 5, baseCost: 200, costGrowth: 1.8,
       effect: { type: "stepTime", step: "all", perLevel: 0.06 } },
+
+    // Cut & Sew: making blanks in-house is cheaper than buying them in.
+    { id: "cuttingTable", name: "Cutting table", zone: "cutSew", maxLevel: 5, baseCost: 300, costGrowth: 1.8,
+      effect: { type: "partCost", part: "blank", perLevel: 0.04 } },
+
+    // Packing Room: a proper station and packaging bought in bulk.
+    { id: "packingStation", name: "Packing station", zone: "packing", maxLevel: 5, baseCost: 250, costGrowth: 1.7,
+      effect: { type: "stepTime", step: "pack", perLevel: 0.10 } },
+    { id: "bulkPackaging", name: "Bulk packaging", zone: "packing", maxLevel: 5, baseCost: 200, costGrowth: 1.7,
+      effect: { type: "partCost", part: "packaging", perLevel: 0.08 } },
+
+    // Embroidery Corner: a multi-head machine stitches several pieces at once.
+    { id: "multiHead", name: "Multi-head machine", zone: "embroideryCorner", maxLevel: 5, baseCost: 400, costGrowth: 1.8,
+      effect: { type: "stepTime", step: "print", orderType: "embroidery", perLevel: 0.15 } },
+
+    // Kpda Karkhana Bulk Desk: an account manager wins better bulk rates.
+    { id: "accountManager", name: "Account manager", zone: "bulkDesk", maxLevel: 5, baseCost: 600, costGrowth: 1.8,
+      effect: { type: "orderPay", orderType: "kpda", perLevel: 0.03 } },
+  ],
+
+  // ---------------------------------------------------------------------
+  // SHOP ZONES. Each zone is padlocked until the player reaches a level
+  // or holds a cash amount (whichever `requires` names), then it opens by
+  // itself and its upgrades can be bought. A zone with no `requires` is
+  // open from the start.
+  // ---------------------------------------------------------------------
+  zones: [
+    { id: "printFloor", name: "Print Floor",
+      description: "Where every order gets printed." },
+    { id: "cutSew", name: "Cut & Sew", requires: { cash: 2000 },
+      description: "Cut and sew your own blanks instead of buying them in." },
+    { id: "packing", name: "Packing Room", requires: { level: 3 },
+      description: "A proper room for folding, bagging and labelling." },
+    { id: "embroideryCorner", name: "Embroidery Corner", requires: { level: 5 },
+      description: "Space for embroidery machines." },
+    { id: "bulkDesk", name: "Kpda Karkhana Bulk Desk", requires: { level: 6 },
+      description: "A desk for bulk clients like Kpda Karkhana, our partner." },
   ],
 
   // ---------------------------------------------------------------------

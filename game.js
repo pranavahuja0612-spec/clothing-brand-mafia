@@ -30,6 +30,7 @@ function newState() {
     missionBaseline: 0,  // value of the watched counter when the mission started
     xp: 0,             // lifetime experience points
     level: 1,          // kept in step with xp by gainXp()
+    zonesUnlocked: [], // padlocked shop zones the player has opened
     orders: [],
     nextOrderId: 1,
     nextOrderIn: CONFIG.orders.firstOrderDelaySec,
@@ -95,38 +96,54 @@ function effectMultiplier(upgrade, level) {
   return Math.max(CONFIG.upgradeMinMultiplier, 1 - upgrade.effect.perLevel * level);
 }
 
-function upgradeEffectsOfType(type) {
-  return CONFIG.upgrades.filter((u) => u.effect.type === type);
+// Upgrades of one effect type that apply to this order type.
+function upgradeEffectsOfType(type, typeId) {
+  return CONFIG.upgrades.filter(
+    (u) => u.effect.type === type && (!u.effect.orderType || u.effect.orderType === typeId)
+  );
 }
 
-function timeMultiplier(stepId) {
-  return upgradeEffectsOfType("stepTime")
+function timeMultiplier(stepId, typeId) {
+  return upgradeEffectsOfType("stepTime", typeId)
     .filter((u) => u.effect.step === stepId || u.effect.step === "all")
     .reduce((m, u) => m * effectMultiplier(u, upgradeLevel(u.id)), 1);
 }
 
-function partCostMultiplier(part) {
-  return upgradeEffectsOfType("partCost")
+function partCostMultiplier(part, typeId) {
+  return upgradeEffectsOfType("partCost", typeId)
     .filter((u) => u.effect.part === part)
     .reduce((m, u) => m * effectMultiplier(u, upgradeLevel(u.id)), 1);
 }
 
+// Pay bonuses raise what an order pays (1 = no change).
+function payMultiplier(typeId) {
+  return upgradeEffectsOfType("orderPay", typeId)
+    .reduce((m, u) => m * (1 + u.effect.perLevel * upgradeLevel(u.id)), 1);
+}
+
 function describeEffect(upgrade, level) {
   if (level === 0) return "no bonus yet";
-  const cut = formatPercent(1 - effectMultiplier(upgrade, level));
   const e = upgrade.effect;
-  if (e.type === "stepTime") {
-    const what = e.step === "all" ? "Every step" : CONFIG.steps.find((s) => s.id === e.step).label;
-    return `${what} takes ${cut} less time`;
+  const forType = e.orderType ? ` on ${orderType(e.orderType).label} orders` : "";
+  if (e.type === "orderPay") {
+    const who = e.orderType ? `${orderType(e.orderType).label} orders` : "Orders";
+    return `${who} pay ${formatPercent(e.perLevel * level)} more`;
   }
-  return `${partLabel(e.part)} costs ${cut} less`;
+  const cut = formatPercent(1 - effectMultiplier(upgrade, level));
+  if (e.type === "stepTime") {
+    const step = CONFIG.steps.find((s) => s.id === e.step);
+    const stepName = e.orderType ? orderType(e.orderType).stepLabels[e.step] || step.label : step && step.label;
+    const what = e.step === "all" ? "Every step" : stepName;
+    return `${what} takes ${cut} less time${forType}`;
+  }
+  return `${partLabel(e.part)} costs ${cut} less${forType}`;
 }
 
 function buyUpgrade(id) {
   const upgrade = CONFIG.upgrades.find((u) => u.id === id);
   const level = upgradeLevel(id);
   const cost = upgradeCost(upgrade);
-  if (level >= upgrade.maxLevel || state.cash < cost) return;
+  if (!isZoneOpen(upgrade.zone) || level >= upgrade.maxLevel || state.cash < cost) return;
   state.cash -= cost;
   state.upgrades[id] = level + 1;
   addStat("upgradesBought");
@@ -209,11 +226,11 @@ function calcOrderEconomics(quantity, typeId = "screen", withUpgrades = true) {
   costs.blank *= 1 + surchargeRate;
 
   if (withUpgrades) {
-    for (const part of Object.keys(costs)) costs[part] *= partCostMultiplier(part);
+    for (const part of Object.keys(costs)) costs[part] *= partCostMultiplier(part, type.id);
   }
 
   const totalCost = sumCosts(costs, Object.keys(costs));
-  const revenue = type.pricePerTee * quantity;
+  const revenue = type.pricePerTee * quantity * (withUpgrades ? payMultiplier(type.id) : 1);
   return {
     quantity, typeId: type.id, costs, totalCost, revenue,
     profit: revenue - totalCost,
@@ -234,7 +251,7 @@ function stepSeconds(order, step) {
   const type = orderType(order.typeId);
   const base = step.baseSec + step.secPerTee * order.quantity;
   const typeFactor = type.stepTimeMultiplier[step.id] ?? 1;
-  return base * typeFactor * timeMultiplier(step.id);
+  return base * typeFactor * timeMultiplier(step.id, type.id);
 }
 
 function stepLabel(order, step) {
@@ -441,8 +458,43 @@ function missionTitle(mission) {
   return fillText(mission.title, { amount: mission.goal.money ? formatMoney(amount || 0) : amount });
 }
 
+// ---------- Shop zones ----------
+
+function zoneConfig(zoneId) {
+  return CONFIG.zones.find((z) => z.id === zoneId);
+}
+
+// A zone with no requirement is always open (so are upgrades with no zone).
 function isZoneOpen(zoneId) {
-  return (state.zonesUnlocked || []).includes(zoneId);
+  const zone = zoneConfig(zoneId);
+  if (!zone || !zone.requires) return true;
+  return state.zonesUnlocked.includes(zoneId);
+}
+
+function zoneRequirementMet(zone) {
+  const r = zone.requires || {};
+  if (r.level !== undefined && state.level < r.level) return false;
+  if (r.cash !== undefined && state.cash < r.cash) return false;
+  return true;
+}
+
+function zoneRequirementText(zone) {
+  const r = zone.requires || {};
+  if (r.level !== undefined) return `Reach level ${r.level} (you are level ${state.level})`;
+  if (r.cash !== undefined) return `Hold ${formatMoney(r.cash)} in cash (you have ${formatMoney(state.cash)})`;
+  return "";
+}
+
+// Open every padlocked zone whose threshold is now met.
+function checkZones() {
+  for (const zone of CONFIG.zones) {
+    if (!zone.requires || state.zonesUnlocked.includes(zone.id) || !zoneRequirementMet(zone)) continue;
+    state.zonesUnlocked.push(zone.id);
+    const opens = CONFIG.upgrades.filter((u) => u.zone === zone.id).map((u) => u.name).join(", ");
+    unlockMessages.push(`Zone unlocked: ${zone.name}. New upgrades: ${opens}.`);
+    showUnlockBanner();
+    saveGame();
+  }
 }
 
 // How far the active mission has come, as { current, target }.
@@ -828,20 +880,45 @@ function renderOrders() {
   el.noOrders.hidden = state.orders.length > 0;
 }
 
-// Upgrade rows are built once and updated in place.
+// One panel per shop zone, each holding its upgrades. Built once and
+// updated in place so buttons keep working.
 function buildUpgradeRows() {
-  el.upgrades.innerHTML = CONFIG.upgrades.map((u) => `
-    <div class="panel upgrade" data-upgrade="${u.id}">
-      <div class="order-head"><strong>${u.name}</strong><span class="upgrade-level"></span></div>
-      <div class="muted upgrade-now"></div>
-      <div class="muted upgrade-next"></div>
-      <button class="upgrade-buy"></button>
-    </div>`).join("");
+  el.upgrades.innerHTML = CONFIG.zones.map((zone) => {
+    const upgrades = CONFIG.upgrades.filter((u) => (u.zone || CONFIG.zones[0].id) === zone.id);
+    const rows = upgrades.map((u) => `
+      <div class="upgrade" data-upgrade="${u.id}">
+        <div class="order-head"><strong>${u.name}</strong><span class="upgrade-level"></span></div>
+        <div class="muted upgrade-now"></div>
+        <div class="muted upgrade-next"></div>
+        <button class="upgrade-buy"></button>
+      </div>`).join("");
+    const names = upgrades.map((u) => u.name).join(", ");
+    return `
+      <div class="panel zone" data-zone="${zone.id}">
+        <div class="order-head"><strong>${zone.name}</strong><span class="zone-status"></span></div>
+        <div class="muted zone-desc">${zone.description}</div>
+        <div class="zone-lock">
+          <div class="zone-lock-need"></div>
+          <div class="muted">Opens: ${names}</div>
+        </div>
+        <div class="zone-upgrades">${rows}</div>
+      </div>`;
+  }).join("");
 }
 
 function renderUpgrades() {
+  for (const zone of CONFIG.zones) {
+    const panel = el.upgrades.querySelector(`[data-zone="${zone.id}"]`);
+    const open = isZoneOpen(zone.id);
+    panel.classList.toggle("locked", !open);
+    panel.querySelector(".zone-status").textContent = open ? "Open" : "\u{1F512} Locked";
+    panel.querySelector(".zone-lock").hidden = open;
+    panel.querySelector(".zone-upgrades").hidden = !open;
+    if (!open) panel.querySelector(".zone-lock-need").textContent = zoneRequirementText(zone);
+  }
   for (const u of CONFIG.upgrades) {
     const row = el.upgrades.querySelector(`[data-upgrade="${u.id}"]`);
+    if (!row || !isZoneOpen(u.zone)) continue;
     const level = upgradeLevel(u.id);
     const maxed = level >= u.maxLevel;
     const cost = upgradeCost(u);
@@ -1160,6 +1237,7 @@ function tick() {
   } else {
     advanceGame(dt);
   }
+  checkZones();
   checkMissions();
   checkLessons();
   render();
@@ -1206,6 +1284,7 @@ function start() {
     applyAway(Date.now() - saved.lastSeen);
   }
   checkUnlocks();   // catches up if config thresholds changed
+  checkZones();
   lastTick = Date.now();
   initAnalytics();
   track("gameStarted");
