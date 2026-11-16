@@ -255,6 +255,20 @@ const CONFIG = {
   },
 
   // ---------------------------------------------------------------------
+  // PLAYER LEVEL. XP comes from missions (see below) and from every order
+  // shipped: perOrder + perTee x tees. Going from level n to n+1 takes
+  // firstLevelXp x growth^(n-1) XP, so levels get slowly harder:
+  // level 2 at 60 XP, 3 at 144, 4 at 262, 5 at 427, 6 at 658, 7 at 981.
+  // ---------------------------------------------------------------------
+  level: {
+    xpPerOrder: 10,
+    xpPerTee: 0.2,
+    firstLevelXp: 60,
+    growth: 1.4,
+    max: 50,
+  },
+
+  // ---------------------------------------------------------------------
   // MISSIONS. Text and order are in missions.js. Here: the target
   // (`amount`, used by gain and reach goals) and the reward for each one.
   // Rewards grow as the missions get harder.

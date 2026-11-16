@@ -29,6 +29,7 @@ function newState() {
     missionIndex: 0,   // which mission in missions.js is active
     missionBaseline: 0,  // value of the watched counter when the mission started
     xp: 0,             // lifetime experience points
+    level: 1,          // kept in step with xp by gainXp()
     orders: [],
     nextOrderId: 1,
     nextOrderIn: CONFIG.orders.firstOrderDelaySec,
@@ -359,7 +360,9 @@ function shipOrder(order) {
   if (order.pricing && order.pricing.belowMoq) addStat("shippedSmall");
   if (order.pricing && order.pricing.discountRate > 0) addStat("shippedBulk");
   removeOrder(order);
-  showNotice(`Order #${order.id} shipped: +${formatMoney(order.value)}`, "good");
+  const xp = orderXp(order);
+  showNotice(`Order #${order.id} shipped: +${formatMoney(order.value)}, +${xp} XP`, "good");
+  gainXp(xp);
   if (state.ordersShipped === 1) track("firstOrderShipped");
   checkUnlocks();
   checkMissions();
@@ -490,9 +493,36 @@ function checkMissions() {
   if (finished) saveGame();
 }
 
-// Experience points. Levels come in Part 2.
+// ---------- Player level ----------
+
+function xpToNextLevel(level) {
+  const c = CONFIG.level;
+  return Math.round(c.firstLevelXp * Math.pow(c.growth, level - 1));
+}
+
+// Level for a lifetime XP total, plus progress into the current level.
+function levelInfo(xp) {
+  let level = 1;
+  let left = xp;
+  while (level < CONFIG.level.max && left >= xpToNextLevel(level)) {
+    left -= xpToNextLevel(level);
+    level += 1;
+  }
+  return { level, intoLevel: left, needed: xpToNextLevel(level), maxed: level >= CONFIG.level.max };
+}
+
+function orderXp(order) {
+  return Math.round(CONFIG.level.xpPerOrder + CONFIG.level.xpPerTee * order.quantity);
+}
+
 function gainXp(amount) {
   state.xp += amount;
+  const level = levelInfo(state.xp).level;
+  if (level > state.level) {
+    state.level = level;
+    unlockMessages.push(`Level up! You reached level ${level}.`);
+    showUnlockBanner();
+  }
 }
 
 // ---------- Save migration ----------
@@ -510,6 +540,9 @@ function migrateSave(saved) {
 // had clearly already done are marked complete, without paying rewards.
 function migrateToV2(s) {
   s.stats = { upgradesBought: Object.values(s.upgrades || {}).reduce((a, b) => a + b, 0) };
+  // Credit past orders with base XP so a long-time player does not restart at level 1.
+  s.xp = (s.ordersShipped || 0) * CONFIG.level.xpPerOrder;
+  s.level = levelInfo(s.xp).level;
   s.missionIndex = 0;
   s.missionBaseline = 0;
   const previous = state;
@@ -598,6 +631,9 @@ const el = {
   resultDownload: document.getElementById("result-download"),
   resultClose: document.getElementById("result-close"),
   viewResult: document.getElementById("view-result"),
+  level: document.getElementById("level"),
+  xpText: document.getElementById("xp-text"),
+  xpFill: document.getElementById("xp-fill"),
   missionLabel: document.getElementById("mission-label"),
   missionTitle: document.getElementById("mission-title"),
   missionDesc: document.getElementById("mission-desc"),
@@ -605,6 +641,15 @@ const el = {
   missionProgress: document.getElementById("mission-progress"),
   missionReward: document.getElementById("mission-reward"),
 };
+
+function renderLevel() {
+  const info = levelInfo(state.xp);
+  el.level.textContent = info.level;
+  el.xpText.textContent = info.maxed
+    ? `${formatNumber(state.xp)} XP (max level)`
+    : `${formatNumber(info.intoLevel)} / ${formatNumber(info.needed)} XP to level ${info.level + 1}`;
+  el.xpFill.style.width = info.maxed ? "100%" : `${(100 * info.intoLevel) / info.needed}%`;
+}
 
 function renderMission() {
   const mission = currentMission();
@@ -828,6 +873,7 @@ function render() {
   el.reputation.textContent = formatNumber(state.reputation);
   el.brand.textContent = state.brandName;
   el.viewResult.hidden = !state.milestoneReached;
+  renderLevel();
   renderMission();
   renderOrders();
   renderUpgrades();
