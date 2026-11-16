@@ -1,7 +1,8 @@
 // Lesson cards. All lesson text lives here.
 //
 // id:      unique name, saved once the card has been shown
-// trigger: a name that game.js checks (see LESSON_TRIGGERS in game.js)
+// trigger: a name that game.js checks (see LESSON_TRIGGERS in game.js), or
+//          "mission:<mission id>" to show the card when that mission starts
 // title, body: original text, two to four short sentences each
 //
 // Every card links to the B2B page (CONFIG.b2bPageUrl) using `linkText`.
@@ -73,5 +74,51 @@ const LESSONS = [
       "one return can wipe out the profit from several sales. Check quality before you pack " +
       "and keep a little margin aside for the ones that slip through.",
     linkText: "Learn how to cut down returns",
+  },
+
+  // ----- Week 2: shown when the matching mission starts -----
+  {
+    id: "pricing-for-profit",
+    trigger: "mission:price-for-profit",
+    title: "Price for profit, not for sales",
+    body:
+      "Build your price up from your costs, not down from what the shop next door charges. " +
+      "Work out your full cost per tee, add the margin you need, and check that the margin " +
+      "still holds after discounts and the odd spoiled piece. A price that only covers costs " +
+      "leaves nothing to grow with.",
+    linkText: "Work out a price that leaves you a profit",
+  },
+  {
+    id: "sampling",
+    trigger: "mission:test-run",
+    title: "Sample before you go bulk",
+    body:
+      "Before you print hundreds of pieces, make one or two samples and check the fabric, " +
+      "the fit, the print colour and how it survives a wash. A sample costs a little; fixing " +
+      "a mistake on three hundred shirts costs a lot. Get the customer to approve the sample " +
+      "in writing before the bulk run starts.",
+    linkText: "Plan a sample run before your next order",
+  },
+  {
+    id: "cash-flow",
+    trigger: "mission:cash-cushion",
+    title: "Cash flow keeps the lights on",
+    body:
+      "Profit on paper is not money in the bank. You pay for blanks, ink and wages before the " +
+      "customer pays you, so one big order can leave you short for days. Keep enough cash to " +
+      "cover your next few orders, and ask for a deposit on large jobs.",
+    linkText: "Keep your cash flow healthy",
+  },
+  {
+    id: "white-label",
+    trigger: "mission:win-the-partner",
+    title: "White-label or your own brand?",
+    body:
+      "White-label means you make products that another business sells under its own name, " +
+      "like the bulk orders a partner such as Kpda Karkhana sends. It brings steady volume, " +
+      "but the brand and most of the margin belong to the client. Your own label keeps the " +
+      "margin and the customers, but you carry the risk of design, stock and marketing. Many " +
+      "makers do both: white-label work pays the bills while their own label grows.",
+    linkText: "Decide between white-label and your own label",
   },
 ];

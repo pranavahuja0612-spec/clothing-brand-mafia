@@ -1107,13 +1107,22 @@ const LESSON_TRIGGERS = {
 
 let currentLesson = null;
 
+// "mission:<id>" triggers fire once that mission has started (or is past).
+function lessonTriggerMet(trigger) {
+  if (trigger.startsWith("mission:")) {
+    const index = MISSIONS.findIndex((m) => m.id === trigger.slice("mission:".length));
+    return index >= 0 && state.missionIndex >= index;
+  }
+  const check = LESSON_TRIGGERS[trigger];
+  return Boolean(check && check());
+}
+
 // Show the next unseen lesson whose trigger is true, one at a time.
 function checkLessons() {
   if (currentLesson || !state.brandName) return;
-  const next = LESSONS.find((lesson) => {
-    const trigger = LESSON_TRIGGERS[lesson.trigger];
-    return !state.lessonsSeen.includes(lesson.id) && trigger && trigger();
-  });
+  const next = LESSONS.find(
+    (lesson) => !state.lessonsSeen.includes(lesson.id) && lessonTriggerMet(lesson.trigger)
+  );
   if (next) showLesson(next);
 }
 
