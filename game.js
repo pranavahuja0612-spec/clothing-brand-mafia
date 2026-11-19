@@ -868,6 +868,28 @@ function renderMission() {
   el.missionReward.textContent = fillText(MISSION_TEXT.reward, { cash: formatMoney(reward.cash || 0), xp: reward.xp || 0 });
 }
 
+// Panels slide in and fade out instead of snapping (Week 6). `up` is the
+// class that slides a bottom sheet into view.
+const hideTimers = new WeakMap();
+
+function showSmoothly(node) {
+  clearTimeout(hideTimers.get(node));
+  node.classList.remove("leaving");
+  node.hidden = false;
+  requestAnimationFrame(() => requestAnimationFrame(() => node.classList.add("up")));
+}
+
+function hideSmoothly(node, ms = 300) {
+  if (node.hidden) return;
+  node.classList.remove("up");
+  node.classList.add("leaving");
+  clearTimeout(hideTimers.get(node));
+  hideTimers.set(node, setTimeout(() => {
+    node.hidden = true;
+    node.classList.remove("leaving");
+  }, ms));
+}
+
 function showNotice(text, kind) {
   el.notice.textContent = text;
   el.notice.className = kind || "";
@@ -879,18 +901,18 @@ function showWelcomeBack(result) {
     `You were away for ${formatDuration(result.seconds)}${capNote}. ` +
     `Your shop earned ${formatMoney(result.earned)} while you were gone. ` +
     `Open orders were put on hold.`;
-  el.welcome.hidden = false;
+  showSmoothly(el.welcome);
 }
 
 function hideWelcomeBack() {
-  el.welcome.hidden = true;
+  hideSmoothly(el.welcome);
 }
 
 let unlockBannerTimer = 0;
 
 function showUnlockBanner() {
   el.unlockText.innerHTML = unlockMessages.map((m) => `<p>${m}</p>`).join("");
-  el.unlockBanner.hidden = false;
+  showSmoothly(el.unlockBanner);
   // In the 3D shop the news clears itself, so it never sits over the floor.
   clearTimeout(unlockBannerTimer);
   if (carryActive()) unlockBannerTimer = setTimeout(hideUnlockBanner, CONFIG.carry.bannerSeconds * 1000);
@@ -898,7 +920,7 @@ function showUnlockBanner() {
 
 function hideUnlockBanner() {
   unlockMessages = [];
-  el.unlockBanner.hidden = true;
+  hideSmoothly(el.unlockBanner);
 }
 
 // One card per order. Built once, then updated in place so buttons keep working.
@@ -1120,6 +1142,8 @@ function render() {
   el.cash.textContent = formatMoney(displayedCash());
   el.reputation.textContent = formatNumber(state.reputation);
   el.brand.textContent = state.brandName;
+  setText("menu-brand", state.brandName);
+  setText("menu-rep", `⭐ ${formatNumber(state.reputation)} reputation`);
   el.viewResult.hidden = !state.milestoneReached;
   renderLevel();
   renderMission();
@@ -1127,6 +1151,11 @@ function render() {
   renderUpgrades();
   renderUnlocks();
   renderRebrand();
+}
+
+function setText(id, text) {
+  const node = document.getElementById(id);
+  if (node && node.textContent !== text) node.textContent = text;
 }
 
 // ---------- Tracking ----------
@@ -1349,7 +1378,7 @@ function showLesson(lesson) {
   el.lessonBody.textContent = lesson.body;
   el.lessonLink.href = CONFIG.b2bPageUrl;
   el.lessonLink.textContent = lesson.linkText + " →";
-  el.lesson.hidden = false;
+  showSmoothly(el.lesson);
   document.body.classList.add("lesson-open");
   track("lessonOpened", lesson.id);
   saveGame();
@@ -1358,7 +1387,7 @@ function showLesson(lesson) {
 function hideLesson() {
   if (currentLesson) lastLessonClosedAt = performance.now();
   currentLesson = null;
-  el.lesson.hidden = true;
+  hideSmoothly(el.lesson, 320);
   document.body.classList.remove("lesson-open");
 }
 

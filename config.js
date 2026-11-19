@@ -1,6 +1,20 @@
 // All game numbers live here. Balance the game by editing this file only.
 // Money is in dollars. Game seconds are compressed: one game second stands
 // in for a good chunk of real shop time.
+
+// The art palette (Week 6). STYLE.md explains where each colour is used;
+// the CSS in index.html repeats these as variables, so change both together.
+const PALETTE = {
+  ink: "#3b2a4a",        // plum: outlines, deep shadows, panels
+  cream: "#fff4e2",      // highlights, blank tees, text on dark
+  sun: "#ffc53d",        // sunflower: cash, coins, guide, main buttons
+  tomato: "#f0544f",     // costs, warnings, the player's cap
+  tangerine: "#f7934c",  // wood, cardboard, warm accents
+  mint: "#2fbfa5",       // success, ready tiles, embroidery
+  sky: "#4da6e8",        // Print Floor, screen-printed tees
+  lilac: "#9b7be0",      // level and XP, Cut & Sew
+};
+
 const CONFIG = {
   saveKey: "clothingBrandMafia.save.v1",   // kept so older saves still load
   saveVersion: 2,                          // 2 = Week 2 (missions, level, zones, rebrand)
@@ -399,6 +413,37 @@ const CONFIG = {
     warmUpSeconds: 1.5,
     checkSeconds: 4,
     maxPixelRatio: 1.5,      // sharper costs more on phones
+    // Art and feel (Week 6). See STYLE.md.
+    palette: PALETTE,
+    art: {
+      toonSteps: [0.62, 0.84, 1],   // the three light bands of the toon shading
+      outline: 0.035,               // outline thickness in world units
+      shadowMapPhone: 1024,         // soft shadow detail; phones get the smaller map
+      shadowMapDesktop: 2048,
+      shadowRadius: 9,              // how far around the camera shadows are drawn
+      phoneZoom: 1.9,               // phones start closer in so objects read clearly
+      popSeconds: 0.35,             // ease-out-back pop when something appears
+      shrinkSeconds: 0.22,          // and the shrink when it goes
+      flySeconds: 0.3,              // items flying between hands and stations
+      slowMoSeconds: 0.45,          // short slow motion on an unlock
+      slowMoScale: 0.3,
+      punchZoom: 0.14,              // camera punch on an unlock (fraction of the zoom)
+      cashCoins: 8,                 // coins that fly to the cash counter on a sale
+      assetWaitSeconds: 4,          // wait this long for models, then start with shapes
+    },
+    // 3D models (glTF). They load over http(s) only; opened from disk the
+    // game uses the shapes built in code instead. KayKit packs are CC0 (see
+    // CREDITS.md). Put the owner's tee models in assets/tees/ and list them
+    // in `teeModels`; the first one that loads is used for every tee.
+    models: {
+      teeModels: ["assets/tees/tee.glb"],
+      kaykit: {
+        furniture: ["shelf_B_large_decorated", "table_medium_long", "chair_A", "chair_stool", "cabinet_medium",
+          "cactus_medium_A", "cactus_small_A", "lamp_standing", "rug_rectangle_stripes_A", "book_set"],
+        restaurant: ["crate", "papertowel"],
+        city: ["box_A", "box_B", "car_stationwagon", "bench", "bush", "trash_A", "dumpster", "streetlight", "firehydrant"],
+      },
+    },
     // Camera: a fixed isometric angle. `viewSize` is how many world units
     // fit the shorter side of the screen at zoom 1.
     viewSize: 22,
@@ -422,27 +467,28 @@ const CONFIG = {
     teeStackLayers: 12,      // a full order's stack of folded tees
     loadTimeBucketsSec: [1, 2, 4, 8],   // load time is tracked as "under 1s", "1-2s", ...
     colors: {
-      background: "#1d2230",
-      ground: "#2a3142",
-      locked: "#4a4d57",
-      dock: "#5b6170",
-      road: "#3a3f4c",
+      background: "#2a1e36",          // plum shade
+      ground: "#463457",              // outside the shop
+      locked: "#8a7c94",              // plum mixed with cream
+      dock: "#d9c8b8",                // cream concrete
+      road: "#5a4668",
       zones: {
-        printFloor: "#3f6fd8",
-        cutSew: "#9b59b6",
-        packing: "#d08a3a",
-        embroideryCorner: "#2fa38a",
-        bulkDesk: "#c9a23c",
+        printFloor: "#9fcdf0",        // sky tint
+        cutSew: "#c9b8f0",            // lilac tint
+        packing: "#fbc59c",           // tangerine tint
+        embroideryCorner: "#93dccd",  // mint tint
+        bulkDesk: "#ffe0a0",          // sunflower tint
       },
-      tees: { screen: "#4dabf7", dtg: "#ff7a7a", embroidery: "#7fd48a", kpda: "#ffd166" },
-      blank: "#f8f9fa",
-      box: "#c08552",
-      player: "#ffd43b",
-      tileReady: "#7fd48a",
-      tileLocked: "#868e96",
-      tileFill: "#ffd166",
-      coin: "#ffc53d",
-      shirt: ["#ff6b6b", "#4dabf7", "#ffd43b"],
+      wall: "#fff4e2",
+      tees: { screen: PALETTE.sky, dtg: PALETTE.tomato, embroidery: PALETTE.mint, kpda: PALETTE.sun },
+      blank: PALETTE.cream,
+      box: PALETTE.tangerine,
+      player: PALETTE.sun,
+      tileReady: PALETTE.mint,
+      tileLocked: "#b3a6bb",
+      tileFill: PALETTE.sun,
+      coin: PALETTE.sun,
+      shirt: [PALETTE.tomato, PALETTE.sky, PALETTE.mint, PALETTE.lilac, PALETTE.tangerine],
     },
     text: {
       settingsTitle: "Settings",

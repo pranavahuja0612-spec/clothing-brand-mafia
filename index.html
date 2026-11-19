@@ -2,322 +2,358 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2a1e36">
   <title>Clothing Brand Mafia</title>
   <style>
+    /* One rounded font for everything (SIL Open Font License, see CREDITS.md). */
+    @font-face {
+      font-family: "Fredoka";
+      src: url("assets/fonts/Fredoka.ttf") format("truetype");
+      font-weight: 300 700;
+      font-display: swap;
+    }
+    /* The palette from STYLE.md (also in config.js as PALETTE). */
+    :root {
+      --ink: #3b2a4a;
+      --ink-deep: #2a1e36;
+      --ink-2: #4b3a5c;
+      --ink-3: #5d4a70;
+      --cream: #fff4e2;
+      --muted: #c4b5cf;
+      --sun: #ffc53d;
+      --sun-dark: #c98e12;
+      --tomato: #f0544f;
+      --tangerine: #f7934c;
+      --mint: #2fbfa5;
+      --sky: #4da6e8;
+      --lilac: #9b7be0;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --pop: cubic-bezier(0.34, 1.4, 0.64, 1);
+    }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      background: #15161a;
-      color: #f2f2f2;
+      font-family: "Fredoka", system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-weight: 500;
+      background: var(--ink-deep);
+      color: var(--cream);
+      -webkit-tap-highlight-color: transparent;
     }
-    main { max-width: 480px; margin: 0 auto; padding: 16px; }
-    h1 { font-size: 1.4rem; margin: 0 0 16px; }
-    h2 { font-size: 1rem; margin: 20px 0 8px; }
-    .panel { background: #22242b; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    main { max-width: 480px; margin: 0 auto; padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(16px + var(--safe-left)); }
+    h1 { font-size: 1.4rem; margin: 0 0 16px; font-weight: 700; }
+    h2 { font-size: 1.05rem; margin: 22px 0 10px; font-weight: 700; }
+    .panel { background: var(--ink); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
     .stats { display: flex; gap: 12px; }
     .stats .panel { flex: 1; margin-bottom: 0; }
-    .label { font-size: 0.8rem; color: #9aa0ad; text-transform: uppercase; letter-spacing: 0.05em; }
+    .label { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
     .big { font-size: 1.8rem; font-weight: 700; margin-top: 4px; }
-    .muted { color: #9aa0ad; font-size: 0.85rem; }
-    #welcome-back {
-      background: #2d4a2f; border: 1px solid #4f8a54;
-      border-radius: 12px; padding: 16px; margin-bottom: 12px;
-    }
-    #welcome-back[hidden] { display: none; }
-    #unlock-banner {
-      background: #3d3320; border: 1px solid #c9a23c;
-      border-radius: 12px; padding: 16px; margin-bottom: 12px;
-    }
-    #unlock-banner[hidden] { display: none; }
+    .muted { color: var(--muted); font-size: 0.9rem; }
+    #welcome-back { background: #1f5a50; border: 2px solid var(--mint); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+    #unlock-banner { background: #5a4214; border: 2px solid var(--sun); border-radius: 18px; padding: 16px; margin-bottom: 14px; }
+    #welcome-back[hidden], #unlock-banner[hidden] { display: none; }
     #unlock-banner p { margin: 6px 0; }
     .upgrade .muted { margin-top: 2px; }
-    .zone .upgrade { background: #1b1d23; border-radius: 10px; padding: 12px; margin-top: 10px; }
-    .zone-desc { font-size: 0.85rem; margin-top: 2px; }
-    .zone-status { font-size: 0.85rem; color: #7fd48a; }
-    .zone.locked { opacity: 0.85; border: 1px dashed #3a3d48; }
-    .zone.locked .zone-status { color: #ffcc66; }
-    .zone-lock { margin-top: 10px; font-size: 0.9rem; }
+    .zone .upgrade { background: var(--ink-deep); border-radius: 14px; padding: 12px; margin-top: 10px; }
+    .zone-desc { font-size: 0.9rem; margin-top: 2px; }
+    .zone-status { font-size: 0.9rem; color: var(--mint); }
+    .zone.locked { opacity: 0.85; border: 2px dashed var(--ink-3); }
+    .zone.locked .zone-status { color: var(--sun); }
+    .zone-lock { margin-top: 10px; font-size: 0.95rem; }
     .zone-lock[hidden], .zone-upgrades[hidden] { display: none; }
-    .upgrade-buy { width: 100%; background: #2f6fed; margin-top: 10px; }
-    .upgrade-buy:disabled { background: #3a3d48; }
-    .upgrade-buy.warn { background: #7a5a1c; }
-    .unlock { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; }
-    .unlock.done strong { color: #7fd48a; }
-    #notice { min-height: 1.4em; margin: 12px 0 0; font-size: 0.9rem; }
-    #notice.good { color: #7fd48a; }
-    #notice.bad { color: #ff8a80; }
+    .upgrade-buy { width: 100%; margin-top: 10px; }
+    .upgrade-buy.warn { background: var(--tangerine); color: var(--ink); }
+    .unlock { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
+    .unlock.done strong { color: var(--mint); }
+    #notice { min-height: 1.4em; margin: 12px 0 0; font-size: 0.95rem; }
+    #notice.good { color: var(--mint); }
+    #notice.bad { color: var(--tomato); }
+
+    /* Buttons: chunky, rounded, at least 48px, with a pressed look. */
     button {
-      font: inherit; color: inherit; background: #3a3d48;
-      border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer;
+      font: inherit; font-weight: 600; color: var(--cream); background: var(--ink-2);
+      border: 0; border-radius: 16px; padding: 10px 18px; cursor: pointer; min-height: 48px;
+      box-shadow: 0 4px 0 rgba(20, 12, 28, 0.55); transition: transform 0.06s, box-shadow 0.06s;
     }
-    button:active { background: #4a4e5c; }
+    button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(20, 12, 28, 0.55); }
     button:disabled { opacity: 0.5; cursor: default; }
-    .order-action { width: 100%; background: #2f6fed; margin-top: 10px; }
-    .order-action:disabled { background: #3a3d48; }
+    .order-action, .upgrade-buy, .primary { width: 100%; background: var(--sun); color: var(--ink); font-size: 1.05rem; box-shadow: 0 4px 0 var(--sun-dark); }
+    .order-action:disabled, .upgrade-buy:disabled { background: var(--ink-2); color: var(--muted); box-shadow: 0 4px 0 rgba(20, 12, 28, 0.55); }
+    .order-action { margin-top: 10px; }
     .order-head { display: flex; justify-content: space-between; align-items: baseline; }
-    .order-deadline.urgent { color: #ff8a80; font-weight: 700; }
-    table.costs { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; }
+    .order-deadline.urgent { color: var(--tomato); font-weight: 700; }
+    table.costs { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.9rem; }
     table.costs td { padding: 2px 0; }
-    table.costs td + td { text-align: right; color: #c9ccd4; }
-    table.costs tr.total td { border-top: 1px solid #3a3d48; font-weight: 700; color: #f2f2f2; padding-top: 4px; }
+    table.costs td + td { text-align: right; color: var(--muted); }
+    table.costs tr.total td { border-top: 1px solid var(--ink-3); font-weight: 700; color: var(--cream); padding-top: 4px; }
     .steps { display: flex; gap: 6px; }
-    .step { flex: 1; text-align: center; font-size: 0.75rem; padding: 4px 0; border-radius: 6px; background: #2c2f38; color: #9aa0ad; }
-    .step.done { background: #2d4a2f; color: #bfe8c4; }
-    .step.current { background: #2f4a7a; color: #fff; }
+    .step { flex: 1; text-align: center; font-size: 0.8rem; padding: 4px 0; border-radius: 8px; background: var(--ink-deep); color: var(--muted); }
+    .step.done { background: #1f5a50; color: #c9f2e9; }
+    .step.current { background: var(--sky); color: var(--ink); }
     .level-panel { margin-top: 12px; padding: 12px 16px; }
     .level-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .level-head strong { font-size: 1.3rem; margin-left: 4px; }
-    .level-head .muted { font-size: 0.8rem; }
+    .level-head .muted { font-size: 0.85rem; }
     .level-panel .bar { margin-top: 6px; }
-    .level-panel .bar-fill { background: #c9a23c; transition: width 0.3s; }
-    .brand-value { margin-top: 8px; font-size: 0.85rem; color: #c9a23c; }
+    .level-panel .bar-fill { background: var(--lilac); transition: width 0.4s var(--pop); }
+    .brand-value { margin-top: 8px; font-size: 0.9rem; color: var(--sun); }
     .brand-value[hidden] { display: none; }
-    #rebrand p { margin: 0 0 10px; font-size: 0.9rem; line-height: 1.4; }
-    .rebrand-cols { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.85rem; }
-    .rebrand-cols > div { flex: 1 1 180px; background: #1b1d23; border-radius: 10px; padding: 10px 12px; }
+    #rebrand p { margin: 0 0 10px; font-size: 0.95rem; line-height: 1.4; }
+    .rebrand-cols { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.9rem; }
+    .rebrand-cols > div { flex: 1 1 180px; background: var(--ink-deep); border-radius: 14px; padding: 10px 12px; }
     .rebrand-cols ul { margin: 6px 0 0; padding-left: 18px; }
     .rebrand-cols li { margin: 2px 0; }
-    #rebrand-resets strong { color: #ff8a80; }
-    #rebrand-keeps strong { color: #7fd48a; }
+    #rebrand-resets strong { color: var(--tomato); }
+    #rebrand-keeps strong { color: var(--mint); }
     #rebrand-status { margin-top: 12px !important; font-weight: 600; }
     #rebrand-form[hidden] { display: none; }
-    #rebrand-form label { display: block; font-size: 0.85rem; color: #9aa0ad; margin-bottom: 6px; }
-    #rebrand-form input {
-      width: 100%; font: inherit; color: inherit; background: #15161a; margin-bottom: 10px;
-      border: 1px solid #3a3d48; border-radius: 8px; padding: 12px; min-height: 44px;
+    #rebrand-form label { display: block; font-size: 0.9rem; color: var(--muted); margin-bottom: 6px; }
+    #rebrand-form input, .dialog input {
+      width: 100%; font: inherit; font-size: 1rem; color: inherit; background: var(--ink-deep); margin-bottom: 10px;
+      border: 2px solid var(--ink-3); border-radius: 14px; padding: 12px; min-height: 48px;
     }
-    .mission { margin-top: 12px; border: 1px solid #3f5fa8; }
-    .mission .label { color: #8fb0ff; }
-    .mission strong { display: block; margin-top: 4px; font-size: 1.05rem; }
-    .mission p { margin: 4px 0 0; font-size: 0.85rem; }
-    .mission .bar-fill { background: #7fd48a; transition: width 0.3s; }
-    .mission-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 0.85rem; }
+    .mission { margin-top: 12px; border: 2px solid rgba(155, 123, 224, 0.6); }
+    .mission .label { color: var(--lilac); }
+    .mission strong { display: block; margin-top: 4px; font-size: 1.1rem; font-weight: 700; }
+    .mission p { margin: 4px 0 0; font-size: 0.9rem; }
+    .mission .bar-fill { background: var(--mint); transition: width 0.4s var(--pop); }
+    .mission-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px; font-size: 0.9rem; }
     #debug[hidden] { display: none; }
     #debug table td { font-size: 0.7rem; }
-    .order-notes p { margin: 4px 0 0; font-size: 0.8rem; color: #9aa0ad; }
-    .order-notes p.warn { color: #ffcc66; }
-    .order-notes p.good { color: #7fd48a; }
-    .bar { height: 6px; background: #2c2f38; border-radius: 3px; margin-top: 10px; overflow: hidden; }
-    .bar-fill { height: 100%; width: 0; background: #2f6fed; }
-    /* Lesson card: floats at the bottom, never blocks the game */
-    #lesson-card {
-      position: fixed; left: 12px; right: 12px; bottom: 12px;
-      max-width: 456px; margin: 0 auto; z-index: 10;
-      background: #1f2a44; border: 1px solid #3f5fa8; border-radius: 12px;
-      padding: 14px 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
-    }
-    #lesson-card[hidden] { display: none; }
-    #lesson-card .label { color: #8fb0ff; }
-    #lesson-card h3 { margin: 4px 0 6px; font-size: 1rem; }
-    #lesson-card p { margin: 0 0 8px; font-size: 0.9rem; line-height: 1.4; }
-    #lesson-card a { color: #8fb0ff; }
-    #lesson-card .lesson-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    #lesson-card .lesson-actions button { white-space: nowrap; flex-shrink: 0; }
-    #lesson-card { max-height: 50vh; overflow-y: auto; }
-    body.lesson-open:not(.view-3d) main { padding-bottom: 50vh; }
-    .footer { text-align: center; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
-    .footer button { font-size: 0.85rem; color: #9aa0ad; background: none; }
-    .footer #view-result { color: #fff; background: #2f6fed; }
+    .order-notes p { margin: 4px 0 0; font-size: 0.85rem; color: var(--muted); }
+    .order-notes p.warn { color: var(--sun); }
+    .order-notes p.good { color: var(--mint); }
+    .bar { height: 8px; background: var(--ink-deep); border-radius: 4px; margin-top: 10px; overflow: hidden; }
+    .bar-fill { height: 100%; width: 0; background: var(--sky); border-radius: 4px; }
+    .footer { text-align: center; margin-top: 24px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .footer button { font-size: 0.9rem; color: var(--muted); background: none; box-shadow: none; }
+    .footer #view-result { color: var(--ink); background: var(--sun); box-shadow: 0 4px 0 var(--sun-dark); }
     .footer button[hidden] { display: none; }
     .brand-line { margin: -10px 0 14px; }
 
-    /* Full-screen dialogs: brand name and result card */
+    /* Lesson card: a bottom sheet that slides up and never covers the HUD. */
+    #lesson-card {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+      max-width: 560px; margin: 0 auto; max-height: 46vh; overflow-y: auto;
+      background: var(--ink); border: 3px solid rgba(155, 123, 224, 0.55); border-bottom: 0;
+      border-radius: 26px 26px 0 0; box-shadow: 0 -10px 30px rgba(20, 12, 28, 0.45);
+      padding: 8px calc(18px + var(--safe-right)) calc(14px + var(--safe-bottom)) calc(18px + var(--safe-left));
+      transform: translateY(110%); transition: transform 0.42s var(--pop);
+    }
+    #lesson-card.up { transform: translateY(0); }
+    #lesson-card.leaving { transition: transform 0.28s ease-in; }
+    #lesson-card[hidden] { display: none; }
+    #lesson-card::before { content: ""; display: block; width: 46px; height: 5px; border-radius: 3px; background: rgba(255, 244, 226, 0.3); margin: 2px auto 8px; }
+    #lesson-card .label { color: var(--lilac); }
+    #lesson-card h3 { margin: 2px 0 6px; font-size: 1.15rem; font-weight: 700; }
+    #lesson-card p { margin: 0 0 10px; font-size: 0.98rem; line-height: 1.42; }
+    #lesson-card a { color: var(--sun); }
+    #lesson-card .lesson-actions { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    #lesson-card .lesson-actions a { padding: 12px 0; }
+    #lesson-card .lesson-actions button { white-space: nowrap; flex-shrink: 0; background: var(--sun); color: var(--ink); box-shadow: 0 4px 0 var(--sun-dark); padding: 10px 22px; }
+    body.lesson-open:not(.view-3d) main { padding-bottom: 50vh; }
+
+    /* Full-screen dialogs: brand name, settings and result card */
     .overlay {
       position: fixed; inset: 0; z-index: 20; overflow-y: auto;
-      background: rgba(10, 10, 14, 0.85); padding: 16px;
+      background: rgba(26, 17, 34, 0.82); padding: calc(16px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
       display: flex; align-items: flex-start; justify-content: center;
     }
     .overlay[hidden] { display: none; }
+    .overlay:not([hidden]) .dialog { animation: dialog-in 0.36s var(--pop); }
+    @keyframes dialog-in { from { transform: translateY(24px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
     .dialog {
       width: 100%; max-width: 440px; margin: auto;
-      background: #22242b; border-radius: 12px; padding: 20px;
+      background: var(--ink); border-radius: 24px; padding: 22px; border: 3px solid var(--ink-3);
     }
-    .dialog h2 { margin-top: 0; font-size: 1.2rem; }
-    .dialog input {
-      width: 100%; font: inherit; font-size: 1rem; color: inherit; background: #15161a;
-      border: 1px solid #3a3d48; border-radius: 8px; padding: 12px; min-height: 44px;
-    }
-    .dialog canvas { width: 100%; height: auto; border-radius: 8px; display: block; }
-    .dialog a { display: block; margin: 12px 0; color: #8fb0ff; text-align: center; padding: 8px 0; }
-    .dialog-actions { display: flex; gap: 8px; }
+    .dialog h2 { margin-top: 0; font-size: 1.3rem; }
+    .dialog canvas { width: 100%; height: auto; border-radius: 12px; display: block; }
+    .dialog a { display: block; margin: 12px 0; color: var(--sun); text-align: center; padding: 10px 0; }
+    .dialog-actions { display: flex; gap: 10px; }
     .dialog-actions button { flex: 1; }
-    .bad-text { color: #ff8a80; min-height: 1.3em; margin: 6px 0; font-size: 0.85rem; }
-    .primary { width: 100%; background: #2f6fed; }
+    .bad-text { color: var(--tomato); min-height: 1.3em; margin: 6px 0; font-size: 0.9rem; }
+    #settings-overlay .dialog-actions button.selected { background: var(--sky); color: var(--ink); box-shadow: 0 4px 0 #2a6f9f; }
+    #settings-overlay .dialog > p { margin: 12px 0; }
 
-    /* Phones: keep every tap target at least 44px tall, nothing wider than the screen */
-    button, .order-action, .upgrade-buy { min-height: 44px; }
     #debug { overflow-x: auto; }
     @media (max-width: 400px) {
-      main { padding: 12px; }
+      main { padding-left: calc(12px + var(--safe-left)); padding-right: calc(12px + var(--safe-right)); }
       .big { font-size: 1.5rem; }
       .panel { padding: 12px; }
-      #lesson-card { left: 8px; right: 8px; bottom: 8px; }
     }
 
-    /* Header row and settings button (both views) */
+    /* Header row and the round button (both views) */
     .hud-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 16px; }
     .hud-top h1 { margin: 0; }
-    .icon-button { min-width: 44px; min-height: 44px; padding: 0; font-size: 1.3rem; border-radius: 12px; }
-    #settings-overlay .dialog-actions button.selected { background: #2f6fed; }
-    #settings-overlay .dialog > p { margin: 10px 0; }
-    #sheet-tabs { display: none; }
+    .icon-button { min-width: 48px; min-height: 48px; padding: 0; font-size: 1.4rem; border-radius: 16px; }
+    #sheet-tabs, #menu-head { display: none; }
 
-    /* ---------- 3D view: the page becomes an overlay on the scene ---------- */
-    #scene-root { position: fixed; inset: 0; z-index: 0; background: #1d2230; }
+    /* Every button pops when pressed (both views). */
+    @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(0.9); } 100% { transform: scale(1); } }
+    button.pop { animation: pop 0.2s var(--pop); }
+    @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.14); } 100% { transform: scale(1); } }
+    .bump { animation: bump 0.3s var(--pop); }
+    #upgrade-hint { margin: 0 0 8px; }
+    #upgrade-hint[hidden], .upgrade[hidden], .upgrade-buy[hidden] { display: none; }
+    .order-action.carry-status { background: var(--ink-2); color: var(--cream); opacity: 1; box-shadow: none !important; }
+
+    /* ---------- 3D view: the page becomes a light overlay on the scene ---------- */
+    #scene-root { position: fixed; inset: 0; z-index: 0; background: var(--ink-deep); }
     #scene-root[hidden] { display: none; }
-    #scene-root canvas { display: block; touch-action: none; cursor: grab; }
-    #scene-root canvas:active { cursor: grabbing; }
+    #scene-root canvas { display: block; touch-action: none; }
+    #scene-root.loading::after {
+      content: "Opening the shop\2026"; position: absolute; inset: 0; display: grid; place-items: center;
+      font-size: 1.3rem; font-weight: 600; color: var(--cream); animation: breathe 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes breathe { from { opacity: 0.45; } to { opacity: 1; } }
 
     body.view-3d { overflow: hidden; }
-    body.view-3d main {
-      position: fixed; inset: 0; z-index: 1; max-width: none; padding: 0;
-      pointer-events: none; display: flex; flex-direction: column; justify-content: space-between;
-    }
-    body.view-3d #hud, body.view-3d #sheet { pointer-events: auto; width: 100%; max-width: 520px; margin: 0 auto; }
-    body.view-3d #hud { padding: 8px 10px 0; max-height: 46vh; overflow-y: auto; }
-    body.view-3d .hud-top { margin-bottom: 2px; }
-    body.view-3d .hud-top h1 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: #ffd166; text-shadow: 0 2px 0 #000; }
-    body.view-3d .brand-line { margin: 0 0 6px; color: #fff; font-weight: 900; font-size: 1.2rem; text-shadow: 0 2px 0 #000; }
-    body.view-3d .stats { gap: 8px; }
-    body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission,
-    body.view-3d #welcome-back, body.view-3d #unlock-banner {
-      border-radius: 16px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.4);
-    }
-    body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission {
-      background: rgba(20, 22, 30, 0.86); border: 2px solid rgba(255, 255, 255, 0.08); padding: 6px 12px;
-    }
-    body.view-3d .label { font-weight: 800; font-size: 0.7rem; }
-    body.view-3d .big { font-size: 1.3rem; font-weight: 900; margin-top: 0; }
-    body.view-3d .level-panel { margin-top: 6px; }
-    body.view-3d .level-head strong { font-weight: 900; }
-    body.view-3d .mission { margin-top: 6px; }
-    body.view-3d .mission strong { font-weight: 900; font-size: 0.95rem; }
-    body.view-3d #mission-desc { display: none; }
-    body.view-3d .bar { height: 8px; border-radius: 4px; }
-    body.view-3d #notice { margin: 4px 2px 0; min-height: 0; font-weight: 800; text-shadow: 0 1px 0 #000; }
-    body.view-3d #welcome-back, body.view-3d #unlock-banner { padding: 10px 12px; margin-bottom: 6px; }
-    body.view-3d #welcome-back p, body.view-3d #unlock-banner p { margin: 4px 0; font-size: 0.85rem; }
+    body.view-3d main { position: fixed; inset: 0; z-index: 1; max-width: none; padding: 0; pointer-events: none; }
 
-    body.view-3d #sheet {
-      background: rgba(20, 22, 30, 0.95); border-radius: 18px 18px 0 0;
-      box-shadow: 0 -4px 0 rgba(0, 0, 0, 0.35); max-height: 42vh; display: flex; flex-direction: column;
+    /* The HUD: cash, level, the menu button, the mission banner. Nothing else
+       shows during play unless it matters right now (an urgent order, news). */
+    body.view-3d #hud {
+      display: grid; grid-template-columns: auto minmax(0, 1fr) 48px; column-gap: 8px; row-gap: 8px; align-items: center;
+      width: 100%; max-width: 560px; margin: 0 auto;
+      padding: calc(10px + var(--safe-top)) calc(12px + var(--safe-right)) 0 calc(12px + var(--safe-left));
     }
-    body.view-3d #sheet-tabs { display: flex; gap: 6px; padding: 8px; flex: 0 0 auto; }
-    body.view-3d #sheet-tabs button { flex: 1; background: #2c2f38; }
-    body.view-3d #sheet-tabs #sheet-toggle { flex: 0 0 48px; }
-    body.view-3d #sheet.collapsed #sheet-toggle { transform: rotate(180deg); }
+    body.view-3d .hud-top, body.view-3d .stats { display: contents; }
+    body.view-3d .hud-top h1, body.view-3d .brand-line, body.view-3d .rep-panel,
+    body.view-3d #notice, body.view-3d .brand-value { display: none !important; }
+    body.view-3d .cash-panel, body.view-3d .level-panel, body.view-3d .mission, body.view-3d #settings-open,
+    body.view-3d #welcome-back, body.view-3d #unlock-banner, body.view-3d .chip { pointer-events: auto; }
+    body.view-3d .cash-panel, body.view-3d .level-panel, body.view-3d .mission {
+      background: rgba(59, 42, 74, 0.92); border: 3px solid rgba(255, 244, 226, 0.12);
+      box-shadow: 0 4px 0 rgba(20, 12, 28, 0.45); margin: 0;
+    }
+    body.view-3d .cash-panel {
+      grid-column: 1; grid-row: 1; display: flex; align-items: center; gap: 8px;
+      height: 52px; border-radius: 26px; padding: 0 16px 0 6px; min-width: 128px;
+    }
+    body.view-3d .cash-panel::before {
+      content: "$"; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--sun); color: var(--ink); font-weight: 700; font-size: 1.15rem; box-shadow: inset 0 -3px 0 var(--sun-dark);
+    }
+    body.view-3d .cash-panel .label { display: none; }
+    body.view-3d .cash-panel .big { margin: 0; font-size: 1.45rem; color: var(--cream); white-space: nowrap; }
+    body.view-3d .level-panel {
+      grid-column: 2; grid-row: 1; justify-self: start; display: flex; align-items: center; gap: 8px;
+      height: 52px; border-radius: 26px; padding: 0 14px 0 6px;
+    }
+    body.view-3d .level-head { display: block; }
+    body.view-3d .level-head .label, body.view-3d #xp-text { display: none; }
+    body.view-3d #level {
+      display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; margin: 0;
+      background: var(--lilac); color: var(--cream); font-size: 1.15rem; font-weight: 700; box-shadow: inset 0 -3px 0 #6c4fb3;
+    }
+    body.view-3d .level-panel .bar { width: 64px; margin: 0; height: 10px; border-radius: 5px; }
+    body.view-3d #settings-open {
+      grid-column: 3; grid-row: 1; width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(59, 42, 74, 0.92); border: 3px solid rgba(255, 244, 226, 0.12); font-size: 1.35rem;
+    }
+    body.view-3d .mission { grid-column: 1 / -1; grid-row: 2; border-radius: 20px; padding: 8px 14px 10px; }
+    body.view-3d .mission .label { font-size: 0.7rem; }
+    body.view-3d .mission strong { font-size: 1.02rem; margin-top: 0; }
+    body.view-3d #mission-desc, body.view-3d #mission-reward { display: none; }
+    body.view-3d .mission .bar { height: 8px; margin-top: 6px; }
+    body.view-3d .mission-foot { position: absolute; }
+    body.view-3d .mission { position: relative; }
+    body.view-3d .mission-foot { top: 8px; right: 14px; margin: 0; font-size: 0.85rem; color: var(--muted); }
+    body.view-3d #order-chips { grid-column: 1 / -1; grid-row: 3; display: flex; flex-wrap: wrap; gap: 6px; }
+    body.view-3d #order-chips:empty { display: none; }
+    body.view-3d #welcome-back, body.view-3d #unlock-banner {
+      grid-column: 1 / -1; grid-row: 4; margin: 0; padding: 10px 14px; border-radius: 18px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; box-shadow: 0 4px 0 rgba(20, 12, 28, 0.45);
+    }
+    body.view-3d #welcome-back[hidden], body.view-3d #unlock-banner[hidden] { display: none; }
+    body.view-3d #welcome-back p, body.view-3d #unlock-banner p { margin: 2px 0; font-size: 0.9rem; flex: 1 1 200px; }
+    body.view-3d #unlock-banner-text { flex: 1 1 200px; }
+
+    /* Things that show only when relevant slide in and fade out. */
+    @keyframes slide-in { from { transform: translateY(-14px) scale(0.92); opacity: 0; } to { transform: none; opacity: 1; } }
+    body.view-3d #welcome-back:not([hidden]), body.view-3d #unlock-banner:not([hidden]), body.view-3d .chip.urgent { animation: slide-in 0.36s var(--pop); }
+    .leaving { animation: fade-out 0.26s ease-in forwards !important; }
+    @keyframes fade-out { to { transform: translateY(-10px) scale(0.94); opacity: 0; } }
+
+    /* Order chips: only an order about to run out shows during play. */
+    #order-chips { display: none; }
+    .chip {
+      display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 14px; min-height: 36px;
+      background: rgba(59, 42, 74, 0.92); border: 3px solid var(--tomato); font-weight: 600; font-size: 0.9rem;
+      box-shadow: 0 3px 0 rgba(20, 12, 28, 0.45);
+    }
+    body.view-3d .chip:not(.urgent) { display: none; }
+    .chip-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .chip-pips { display: flex; gap: 2px; }
+    .chip-pips i { display: block; width: 12px; height: 8px; background: var(--ink-deep); border-radius: 2px; overflow: hidden; }
+    .chip-pips b { display: block; height: 100%; width: 0; background: var(--mint); }
+    .chip-time { color: var(--tomato); min-width: 30px; text-align: right; }
+
+    /* The menu: a sheet that slides up (from the side on wide screens). */
+    body.view-3d #sheet {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 12; pointer-events: auto;
+      width: 100%; max-width: 560px; margin: 0 auto; max-height: 74vh;
+      display: flex; flex-direction: column; background: var(--ink);
+      border-radius: 26px 26px 0 0; border: 3px solid var(--ink-3); border-bottom: 0;
+      box-shadow: 0 -10px 30px rgba(20, 12, 28, 0.45); padding-bottom: var(--safe-bottom);
+      transform: translateY(105%); visibility: hidden;
+      transition: transform 0.3s ease-in, visibility 0s linear 0.3s;
+    }
+    body.view-3d.menu-open #sheet { transform: none; visibility: visible; transition: transform 0.42s var(--pop), visibility 0s; }
+    body.view-3d #menu-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 18px 0; }
+    body.view-3d #menu-head strong { font-size: 1.15rem; }
+    body.view-3d #menu-head span { color: var(--sun); font-weight: 600; }
+    body.view-3d #sheet-tabs { display: flex; gap: 6px; padding: 10px 12px; flex: 0 0 auto; }
+    body.view-3d #sheet-tabs button { flex: 1; padding: 8px 6px; }
+    body.view-3d #sheet-tabs .icon-button { flex: 0 0 48px; }
     #sheet[data-tab="orders"] #sheet-tabs [data-tab="orders"],
     #sheet[data-tab="shop"] #sheet-tabs [data-tab="shop"],
-    #sheet[data-tab="more"] #sheet-tabs [data-tab="more"] { background: #2f6fed; box-shadow: 0 4px 0 #1c47a8; }
-    body.view-3d .sheet-group { display: none; overflow-y: auto; padding: 0 10px 12px; flex: 1 1 auto; min-height: 0; }
+    #sheet[data-tab="more"] #sheet-tabs [data-tab="more"] { background: var(--sky); color: var(--ink); box-shadow: 0 4px 0 #2a6f9f; }
+    body.view-3d .sheet-group { display: none; overflow-y: auto; padding: 0 14px 14px; flex: 1 1 auto; min-height: 0; }
     body.view-3d #sheet[data-tab="orders"] .sheet-group[data-group="orders"],
     body.view-3d #sheet[data-tab="shop"] .sheet-group[data-group="shop"],
     body.view-3d #sheet[data-tab="more"] .sheet-group[data-group="more"] { display: block; }
-    body.view-3d #sheet.collapsed .sheet-group { display: none !important; }
-    /* Phones: a compact HUD so the shop gets the middle of the screen */
-    @media (max-width: 600px) {
-      body.view-3d #hud { padding: 6px 8px 0; position: relative; }
-      body.view-3d .hud-top { position: absolute; top: 6px; right: 8px; margin: 0; }
-      body.view-3d .hud-top h1 { display: none; }
-      body.view-3d .brand-line { padding-right: 56px; margin: 4px 0 6px; font-size: 1.05rem; min-height: 32px; }
-      body.view-3d .stats { gap: 6px; }
-      body.view-3d .stats .panel, body.view-3d .level-panel, body.view-3d .mission { padding: 4px 10px; border-radius: 12px; }
-      body.view-3d .label { font-size: 0.6rem; }
-      body.view-3d .big { font-size: 1.05rem; }
-      body.view-3d .level-panel { margin-top: 5px; }
-      body.view-3d .level-head strong { font-size: 1rem; }
-      body.view-3d .level-head .muted { font-size: 0.68rem; }
-      body.view-3d .level-panel .bar { margin-top: 3px; height: 6px; }
-      body.view-3d .brand-value { margin-top: 2px; font-size: 0.72rem; }
-      body.view-3d .mission { margin-top: 5px; }
-      body.view-3d .mission strong { font-size: 0.85rem; margin-top: 1px; }
-      body.view-3d .mission .bar { height: 6px; margin-top: 4px; }
-      body.view-3d .mission-foot { font-size: 0.72rem; margin-top: 3px; }
-      body.view-3d #notice { font-size: 0.78rem; }
-      body.view-3d #sheet { max-height: 36vh; }
-      body.view-3d #sheet-tabs { padding: 6px; }
-    }
-    /* Wide screens: HUD in a left column, panel in a right column, shop in the middle */
+    body.view-3d .sheet-group h2 { margin: 4px 0 10px; }
+    body.view-3d .sheet-group .panel { background: var(--ink-2); }
+    body.view-3d .zone .upgrade { background: var(--ink); }
     @media (min-width: 900px) {
-      body.view-3d main { flex-direction: row; align-items: flex-start; }
-      body.view-3d #hud { width: 340px; margin: 0; max-height: 100vh; padding: 12px; }
-      body.view-3d #sheet { width: 400px; margin: 12px; max-height: calc(100vh - 24px); border-radius: 18px; }
+      body.view-3d #hud { margin: 0; max-width: 560px; }
+      body.view-3d #sheet {
+        left: auto; right: 16px; top: 16px; bottom: 16px; width: 400px; max-height: none; margin: 0;
+        border-radius: 26px; border-bottom: 3px solid var(--ink-3); transform: translateX(110%);
+      }
+      body.view-3d.menu-open #sheet { transform: none; }
     }
-    body.view-3d .sheet-group h2 { margin: 2px 0 8px; font-weight: 900; }
-
-    /* Chunky mobile-game buttons */
-    body.view-3d button {
-      font-weight: 800; border-radius: 14px; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
-      transition: transform 0.05s;
-    }
-    body.view-3d button:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45); }
-    body.view-3d .order-action, body.view-3d .upgrade-buy, body.view-3d .primary { font-size: 1.05rem; box-shadow: 0 4px 0 #1c47a8; }
-    body.view-3d .order-action:disabled, body.view-3d .upgrade-buy:disabled { box-shadow: 0 4px 0 #22242b; }
-    body.view-3d .upgrade-buy.warn { box-shadow: 0 4px 0 #4d3810; }
-    body.view-3d .icon-button { background: rgba(20, 22, 30, 0.86); }
-    body.view-3d .footer button { box-shadow: none; }
-    body.view-3d #lesson-card { z-index: 15; }
-
-    /* ---------- Week 5: the carry loop ---------- */
-    /* Every button pops when pressed (both views). */
-    @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(0.92); } 100% { transform: scale(1); } }
-    button.pop { animation: pop 0.18s ease-out; }
-    @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 100% { transform: scale(1); } }
-    .panel.bump { animation: bump 0.3s ease-out; }
-    #upgrade-hint { margin: 0 0 8px; }
-    #upgrade-hint[hidden], .upgrade[hidden], .upgrade-buy[hidden] { display: none; }
-    .order-action.carry-status { background: #2c2f38; color: #f2f2f2; opacity: 1; box-shadow: none !important; }
 
     /* Joystick: appears where the thumb lands. */
     #joystick {
-      position: fixed; z-index: 2; width: 116px; height: 116px; margin: -58px 0 0 -58px;
-      border-radius: 50%; background: rgba(255, 255, 255, 0.12); border: 3px solid rgba(255, 255, 255, 0.35);
-      pointer-events: none;
+      position: fixed; z-index: 2; width: 120px; height: 120px; margin: -60px 0 0 -60px;
+      border-radius: 50%; background: rgba(255, 244, 226, 0.14); border: 3px solid rgba(255, 244, 226, 0.4);
+      pointer-events: none; animation: slide-in 0.2s var(--pop);
     }
     #joystick[hidden] { display: none; }
     #joystick-knob {
-      position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; border-radius: 50%;
-      background: rgba(255, 255, 255, 0.85); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
+      position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; border-radius: 50%;
+      background: var(--cream); box-shadow: 0 4px 0 rgba(59, 42, 74, 0.55);
       transform: translate(-50%, -50%);
     }
-    /* Floating numbers over the 3D scene. */
+    /* Floating numbers and the coins that fly to the cash counter. */
     #fx-layer { position: fixed; inset: 0; z-index: 3; pointer-events: none; overflow: hidden; }
     .floater {
-      position: absolute; left: 0; top: 0; white-space: nowrap; font-weight: 900; font-size: 1.5rem;
-      color: #7fd48a; text-shadow: 0 2px 0 #000, 0 0 6px rgba(0, 0, 0, 0.6); will-change: transform;
+      position: absolute; left: 0; top: 0; white-space: nowrap; font-weight: 700; font-size: 1.6rem;
+      color: var(--mint); will-change: transform;
+      text-shadow: 0 3px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink), 0 -2px 0 var(--ink);
     }
-    .floater.sale { color: #ffd43b; font-size: 2rem; }
-    .floater.cost { color: #ff8a80; font-size: 1.15rem; }
-    .floater.deny { color: #ffffff; font-size: 1.05rem; background: rgba(140, 30, 30, 0.85); padding: 2px 10px; border-radius: 10px; text-shadow: none; }
-
-    /* Order chips: one per open order, with its four stages filling up. */
-    #order-chips { display: none; }
-    body.carry-on #order-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-    .chip {
-      display: flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 12px;
-      background: rgba(20, 22, 30, 0.86); border: 2px solid rgba(255, 255, 255, 0.08); font-weight: 800; font-size: 0.8rem;
-      box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4);
-    }
-    .chip.urgent { border-color: #ff8a80; }
-    .chip.urgent .chip-time { color: #ff8a80; }
-    .chip-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .chip-pips { display: flex; gap: 2px; }
-    .chip-pips i { display: block; width: 12px; height: 7px; background: #3a3d48; border-radius: 2px; overflow: hidden; }
-    .chip-pips b { display: block; height: 100%; width: 0; background: #7fd48a; }
-    .chip-time { color: #c9ccd4; min-width: 28px; text-align: right; }
-
-    /* In the carry loop the HUD stays small so the shop gets the screen. */
-    body.carry-on .stats .panel { padding: 4px 10px; }
-    body.carry-on #xp-text, body.carry-on #mission-reward { display: none; }
-    body.carry-on #notice { display: none; }
-    body.carry-on #sheet.collapsed { max-height: none; }
-    @media (max-width: 600px) {
-      body.carry-on .stats .panel .label { display: none; }
-      body.carry-on .stats .panel:first-child .big::before { content: "\1F4B0 "; }
-      body.carry-on .stats .panel:last-child .big::before { content: "\2B50 "; }
-      body.carry-on .level-panel { margin-top: 4px; }
+    .floater.sale { color: var(--sun); font-size: 2.2rem; }
+    .floater.cost { color: #ff8f86; font-size: 1.2rem; }
+    .floater.deny { color: var(--cream); font-size: 1.05rem; background: var(--tomato); padding: 4px 12px; border-radius: 14px; text-shadow: none; box-shadow: 0 3px 0 #a3302c; }
+    .cash-coin {
+      position: absolute; left: 0; top: 0; width: 24px; height: 24px; border-radius: 50%; opacity: 0;
+      background: radial-gradient(circle at 35% 35%, #ffe7a3, var(--sun) 55%, var(--sun-dark));
+      border: 2px solid var(--ink); will-change: transform;
     }
   </style>
 </head>
@@ -330,7 +366,7 @@
    <div id="hud">
     <div class="hud-top">
       <h1>Clothing Brand Mafia</h1>
-      <button id="settings-open" class="icon-button" aria-label="Settings">&#9881;</button>
+      <button id="settings-open" class="icon-button" aria-label="Menu and settings">&#9881;</button>
     </div>
     <p class="muted brand-line" id="brand-name"></p>
 
@@ -347,11 +383,11 @@
     </div>
 
     <div class="stats">
-      <div class="panel">
+      <div class="panel cash-panel">
         <div class="label">Cash</div>
         <div class="big" id="cash">$0</div>
       </div>
-      <div class="panel">
+      <div class="panel rep-panel">
         <div class="label">Reputation</div>
         <div class="big" id="reputation">0</div>
       </div>
@@ -381,12 +417,17 @@
     <p id="notice"></p>
    </div>
 
-   <div id="sheet" data-tab="orders" class="collapsed">
+   <div id="sheet" data-tab="orders">
+    <div id="menu-head">
+      <strong id="menu-brand"></strong>
+      <span id="menu-rep"></span>
+    </div>
     <nav id="sheet-tabs">
       <button data-tab="orders">Orders</button>
       <button data-tab="shop">Shop</button>
       <button data-tab="more">More</button>
-      <button id="sheet-toggle" aria-label="Hide or show the panel">&#9662;</button>
+      <button id="menu-settings" class="icon-button" aria-label="Settings">&#9881;</button>
+      <button id="menu-close" class="icon-button" aria-label="Close the menu">&#10005;</button>
     </nav>
 
     <section class="sheet-group" data-group="orders">
@@ -488,6 +529,11 @@
   <script src="input.js"></script>
   <script src="carry.js"></script>
   <script src="vendor/three.min.js"></script>
+  <script src="art.js"></script>
   <script src="scene3d.js"></script>
+  <!-- 3D models load as an ES module (see models.js); without it the game
+       uses shapes built in code. -->
+  <script type="importmap">{ "imports": { "three": "./three-shim.js" } }</script>
+  <script type="module" src="models.js"></script>
 </body>
 </html>

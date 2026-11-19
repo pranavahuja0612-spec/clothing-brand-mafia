@@ -39,6 +39,15 @@ keeps the original buttons. Saves are the same in both views: the carry loop
 rebuilds where the items are from each order's step. Sound can be switched
 off in Settings too.
 
+## Art
+
+The look is written down in `STYLE.md` (palette, light, outlines, props,
+motion, UI). To use your own tee model, save it as `assets/tees/tee.glb`
+(or list other files in `config.js` under `view3d.models.teeModels`); it is
+laid flat and sized to a folded tee automatically. Models load when the game
+is served over http(s), for example from GitHub Pages; opened straight from
+disk the game uses shapes built in code instead.
+
 ## Change the numbers
 
 Every number in the game lives in `config.js`, with comments explaining the
@@ -100,6 +109,11 @@ and uses no cookies. No ads, no paid services.
 - `input.js`: joystick and keyboard
 - `sound.js`: sound effects, made in the browser
 - `scene3d.js`: the 3D isometric view
+- `art.js`: the art style in code (toon shading, outlines, props, the rigged character)
+- `models.js`, `three-shim.js`: load the glTF models (KayKit props, your tees)
+- `assets/`: the font, the KayKit models and `assets/tees/` for your own tee models
+- `STYLE.md`: the palette and the art rules
 - `vendor/three.min.js`: three.js r159 (MIT, see `vendor/three.LICENSE.txt`)
+- `vendor/three-addons/`: three.js's glTF loader (MIT, unmodified)
 - `CREDITS.md`: licences for anything reused
 - `CLAUDE.md`: project brief and progress list

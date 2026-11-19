@@ -28,7 +28,10 @@ A free, browser-based idle/tycoon game where the player runs a small clothing an
 - input.js: keyboard (WASD/arrows) and the floating virtual joystick.
 - sound.js: sound effects made with Web Audio (no sound files); on/off in Settings.
 - scene3d.js: the 3D isometric view. It draws `state` and carry.js every frame and calls `Carry.update()`; it never changes the game itself. Its numbers and words live in config.js under `view3d`.
-- vendor/: third-party files kept unmodified (three.js r159, MIT). Record each in CREDITS.md before adding it.
+- art.js: toon materials, outlines, contact shadows, painted textures, the builder that merges a zone's props, and the rigged character (idle, run, carry clips). Style rules in STYLE.md.
+- models.js: ES module that loads glTF models (KayKit props, the owner's tees in assets/tees/) through the unmodified three.js GLTFLoader and three-shim.js. Over http(s) only; from disk the game uses code-built shapes.
+- assets/: fonts (Fredoka, OFL), KayKit models (CC0), assets/tees/ for the owner's tee models.
+- vendor/: third-party files kept unmodified (three.js r159 and its GLTFLoader add-on, MIT). Record each in CREDITS.md before adding it.
 - Saves carry a `version`. When the save shape changes, bump `saveVersion` in config.js and add a migration step in game.js (`migrateSave`). Never wipe old saves.
 - Keep the code readable. Short functions, clear names, comments only where they help.
 
@@ -74,6 +77,13 @@ Rework the core loop to play like a hyper-casual tycoon (move, carry, deliver, u
 6. First two minutes: first sale within 30 seconds, guided by an arrow, no text walls; lesson cards wait until after the first sale.
 7. Track time to first sale, time to first unlock, session length.
 The 2D page keeps the button-driven loop as the fallback.
+
+## Week 6 scope
+Art and feel pass; gameplay and economy unchanged.
+1. One art style (stylised toon, 8-colour warm palette) written down in STYLE.md: warm sun with soft shadows, hemisphere fill, contact shadows, toon shading, outlines on characters and key machines, detail through props, one CC0 pack (KayKit), the owner's tee models from assets/tees/.
+2. Motion: rigged character with blended idle/run/carry; pop-ins with ease-out-back; stacks wobble; machines animate; cash flies to the counter; unlocks get a burst, slow motion and a camera punch; nothing appears or vanishes instantly.
+3. Mobile UI: at most cash, level, mission banner and a menu button during play; 48px targets, safe areas, one rounded font; lesson cards as a bottom sheet; closer camera on phones.
+Budget: 30fps on a mid-range phone, assets under 8 MB.
 
 ## Working style
 - Ask before adding a feature outside the scope above.
@@ -122,5 +132,18 @@ The 2D page keeps the button-driven loop as the fallback.
 - [x] First two minutes: fixed 10-tee first order, guide arrow, upgrade tiles and lessons hidden until the first sale (test bot: first sale in 16s)
 - [x] Tracking: timeToFirstSale, timeToFirstUnlock, sessionLength (buckets, plus seconds in the event log)
 - [x] Tested: fresh save, Day 7 save, 2D/3D switch mid-order (refunds steps paid ahead), WebGL off, 360x740 and 1280x760, 5 staff stress test (59fps, 139 draw calls); 888 KB total
+- [ ] Not yet measured on a real mid-range Android phone (owner to check by hand)
+- [x] Deploy
+
+### Week 6
+- [x] Before screenshots (360x740) of four game states, in screenshots/week6/
+- [x] STYLE.md with the palette and rules; palette in config.js and CSS
+- [x] Toon shading, warm sun with soft shadows, hemisphere fill, contact shadows, outlines on characters and key machines
+- [x] Props: fabric rolls, ink tubs, hanger rails, tee stacks, posters, cables, floor tape and arrows, walls, Kpda Karkhana signboard with bulbs; KayKit furniture and street props (CC0)
+- [x] Rigged character (7 bones) with idle, run, carry idle and carry run clips, blended by speed and load
+- [x] Motion: pops, item flights and shrink-outs, stack wobble, press/dryer/flash/embroidery/tape animations, steam, coins to the counter, slow motion and camera punch on unlocks, shop pops in on load
+- [x] Mobile HUD (cash, level, mission, menu), menu sheet, lesson bottom sheet, Fredoka font, 48px targets, safe areas, phone zoom
+- [x] Tested: first sale 15.9s (bot), 6-carrier stress test 149 draw calls / 3.5ms per frame, no-models fallback, 2D/3D switch, 360/375px and 1280px
+- [ ] Owner's tee models: assets/tees/ did not exist; the code-built tee is used until assets/tees/tee.glb is added
 - [ ] Not yet measured on a real mid-range Android phone (owner to check by hand)
 - [x] Deploy

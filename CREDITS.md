@@ -16,21 +16,40 @@ All code in this repository was written for this project, except:
   registry's SHA-512 before use. The file is unmodified. Added 2026-11-16.
   r159 is used because it is the last release with a classic (non-module)
   build, which still works when `index.html` is opened straight from disk.
+- **three.js r159 add-ons** (`vendor/three-addons/loaders/GLTFLoader.js` and
+  `vendor/three-addons/utils/BufferGeometryUtils.js`), the glTF model loader
+  and a helper it imports. Same licence and copyright as three.js (**MIT**,
+  notice in `vendor/three-addons/LICENSE.txt`). Source: `three@0.159.0` from
+  the npm registry (jsDelivr and unpkg copies compared byte for byte). Both
+  files are unmodified; `three-shim.js` (ours) hands them the page's three.js.
+  Added 2026-11-19 (Week 6).
 
 ## Art, models, fonts and sound
 
-- **3D models:** every model (zone floors, press, dryer, flash cure, tables,
-  sewing machines, embroidery machine, shelves, boxes of tees, workers, the
-  delivery van, padlocks and the Kpda Karkhana sign) is built from simple
-  shapes in code in `scene3d.js`. No model files are used.
-- **Kenney** (https://kenney.nl) was checked first, on 2026-11-16. Its asset
-  packs are released under Creative Commons CC0 (public domain), which allows
-  commercial use with no attribution required. They were not used for now:
-  loading model files needs three.js's GLTF loader, which for this version
-  only exists as an ES module, and browsers block loading model files when
-  the game is opened from disk. If Kenney models are added later, record
-  each pack here with its licence before adding it.
-- **Fonts:** the visitor's system fonts. **Images:** none.
+- **KayKit by Kay Lousberg** (https://kaylousberg.com), three packs:
+  *Furniture Bits 1.0*, *Restaurant Bits 1.0* and *City Builder Bits 1.0*.
+  Licence: **Creative Commons CC0 1.0** (public domain; commercial use
+  allowed, credit not required but given here). Source: KayKit's official
+  GitHub organisation (github.com/KayKit-Game-Assets), checked 2026-11-19.
+  Only the models listed in `config.js` (`view3d.models.kaykit`) are copied
+  into `assets/kaykit/<pack>/`, unmodified, with each pack's `LICENSE.txt`.
+  Used for furniture, plants, boxes and street props.
+- **Other 3D models:** the machines (press, dryer, flash cure, embroidery
+  machine, packing table, fabric rack), walls, tees, boxes, the van, padlocks,
+  tiles, the Kpda Karkhana signboard and the characters (rigged, with idle,
+  run and carry animations) are built in code in `art.js` and `scene3d.js`.
+- **Tee models:** the owner's own models go in `assets/tees/` (see
+  `view3d.models.teeModels`); until then the code-built tee is used.
+- **Kenney** (https://kenney.nl, CC0) was checked first; its site does not
+  allow scripted downloads, so KayKit (same licence) was used instead.
+- **Posters and floor markings:** painted in code; the words and graphics are
+  original.
+- **Font: Fredoka** by the Fredoka Project Authors
+  (`assets/fonts/Fredoka.ttf`, variable weight). Licence: **SIL Open Font
+  License 1.1** (free for commercial use; the licence travels with the font,
+  so it is in `assets/fonts/OFL.txt`). Source: github.com/google/fonts,
+  `ofl/fredoka`, 2026-11-19. Unmodified.
+- **Images:** none.
 - **Sound effects:** made in the browser with the Web Audio API (`sound.js`),
   from simple tones and noise. No sound files are used.
 
